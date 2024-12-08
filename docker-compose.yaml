@@ -1,0 +1,124 @@
+version: '3'
+
+services:
+  gate-service:
+    container_name: gate-service
+    build:
+      dockerfile: gate/Dockerfile
+    ports:
+      - "3000:3000"  
+    depends_on: 
+      - elastic
+      - micro-mail-service
+      - micro-account-service
+      - micro-book-service
+      - micro-transection-service
+    extra_hosts: 
+      - "host.docker.abc:192.168.0.13"
+    networks:
+      - network1
+    command: /bin/bash -c "sleep 10 && node app.js 2"
+
+  micro-account-service:
+    container_name: micro-account-service
+    build:
+      dockerfile: micro-account/Dockerfile
+    ports:
+      - "9501:9501"  
+    depends_on: 
+      - micro-mail-service
+      - rabbitMQ-service-0
+    extra_hosts:
+      - "host.docker.abc:192.168.0.13"
+    networks:
+      - network1
+    command: /bin/bash -c "sleep 10 && node main.js 2"
+
+  micro-book-service:
+    container_name: micro-book-service
+    build:
+      dockerfile: micro-book/Dockerfile
+    ports:
+      - "9502:9502"  
+    depends_on: 
+      - elastic
+    extra_hosts: 
+      - "host.docker.abc:192.168.0.13"
+    networks:
+      - network1
+    command: /bin/bash -c "sleep 10 && node main.js 2"
+
+  micro-transection-service:
+    container_name: micro-transection-service
+    build:
+      dockerfile: micro-transection/Dockerfile
+    ports:
+      - "9503:9503"  
+    depends_on: 
+      - elastic
+    extra_hosts:  
+      - "host.docker.abc:192.168.0.13"
+    networks:
+      - network1
+    command: /bin/bash -c "sleep 10 && node main.js 2"
+
+  micro-mail-service:
+    container_name: micro-mail-service
+    build:
+      dockerfile: micro-mail/Dockerfile
+    ports:
+      - "9504:9504"  
+    depends_on: 
+      - rabbitMQ-service-0
+      - elastic
+    extra_hosts: 
+      - "host.docker.abc:192.168.0.13"
+    networks:
+      - network1
+    command: /bin/bash -c "sleep 10 && node main.js 2"
+
+  rabbitMQ-service-0:
+    container_name: rabbitMQ-service-0
+    image: "rabbitmq:management"
+    environment:
+      RABBITMQ_DEFAULT_USER: "root"
+      RABBITMQ_DEFAULT_PASS: "1234"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - network1
+
+  kibana:
+    container_name: kibana-service
+    image: kibana:7.17.19
+    ports:
+      - "5601:5601"
+    networks:
+      - network1
+    depends_on: 
+      - elastic
+    environment:
+      ELASTICSEARCH_HOSTS: http://elastic-service:9200
+
+  elastic:
+    container_name: elastic-service
+    image: elasticsearch:7.17.19
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - network1
+    environment:
+      discovery.type: "single-node"
+   
+networks:
+  network1:
+    name : bookstore_network_compose
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1
+
+
