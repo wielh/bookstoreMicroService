@@ -30,9 +30,9 @@ class LevelType3 {
 }
 
 const activitySchema = new Schema({
-    type:Number,
-    startDate: mongoose.Types.Long,
-    endDate: mongoose.Types.Long
+    type: {type:Number, default:0},
+    startDate: {type:mongoose.Types.Long},
+    endDate: {type:mongoose.Types.Long}
 },{
     versionKey: false, 
     strict: false

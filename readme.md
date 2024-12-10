@@ -1,9 +1,7 @@
 # Bookstore API 介紹
 
 ## 這是一個怎麼樣的程式
-
   使用 typescript 與 node.js 做的範例 API, 有以下的功能 :
-
  * 支援 google 登入
  * 可以寄信給使用者
  * 使用 JWT 保存登入訊息
@@ -12,7 +10,7 @@
  * 使用 elastic 紀錄 90 日以內的 log
 
 ## 使用到的相關技術
-  typescript, node.js, express, grpc, mongodb, mongoose, docker, rabbitMQ, elastic 與 kibana
+  typescript, node.js, express, grpc, mongodb, mongoose, docker, rabbitMQ, elastic
   
 ## 部署注意事項
  * 主要的微服務可以在本地執行，也可以用 docker 執行
@@ -55,8 +53,6 @@ node mongo-setting/mongo-script.js
 
 + 改版後，尚未測試 dockerfile 是否還能用
 
-+ mongodb 在 docker 模式下，localhost的IP會變動
-
-
++ 在 docker 模式下，localhost的IP會變動
 
 

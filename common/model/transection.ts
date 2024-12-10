@@ -22,7 +22,7 @@ class transectionLogDocument extends Document{
 
 const transectionLogSchema = new Schema({
     username: {type:String, required:true} ,
-    accountType: {type:Number, default: 0},
+    accountType: {type:Number, default:0},
     activityID: {type:String, default:""},
     time: {type:mongoose.Types.Long, required:true}
 },{

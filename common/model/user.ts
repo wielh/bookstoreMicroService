@@ -18,10 +18,10 @@ class NormalUserDocument extends UserDocument {
 }
 
 const NormalUserSchema = new Schema({
-    accountType: Number,
-    username: String,
-    password : String,
-    emailVerified : Number
+    accountType: {type:Number, default:accountType.normal},
+    username: {type:String, require: true},
+    password : {type:String, require: true},
+    emailVerified : {type:Number, default:0}
 },{
     versionKey: false, 
     strict: false
@@ -33,8 +33,8 @@ class GoogleUserDocument extends UserDocument {
 }
 
 const GoogleUserSchema = new Schema({
-    accountType: Number,
-    googleID: String,
+    accountType: {type:Number, default: accountType.google},
+    googleID: {type:String, require: true},
 },{
     versionKey: false, 
     strict: false

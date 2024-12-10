@@ -9,9 +9,8 @@ class BookDocument extends Document{
 }
 
 const bookSchema = new Schema({
-    bookName: String,
-    price: Number,
-    remainNumber: Number
+    bookId: {type:String, require: true},
+    bookName: {type:String},
 },{
     versionKey: false, 
     strict: false
