@@ -2,6 +2,10 @@ API:
   tokenKey: ${BOOKSTORE_TOKEN_KEY}
   tokenExpireSecond: 86400
   emailExpireSecond: 3600
+  rateLimit:
+    intervalms: 60000
+    limitSingalIP: 100
+    limitAll: 100000
   
 googleOauth2:
   googleVerifyID: 118619557524-ej7k7ceopnn8glgi9foksta3t72vnca3.apps.googleusercontent.com
@@ -12,6 +16,7 @@ elastic:
   dockerIP: elastic-container
   dockerComposeIP : elastic-service
   port: 9200
+
 rabbitMQ:
   username: root
   password: ${BOOKSTORE_RABBITMQ_PASSWORD}
@@ -20,9 +25,9 @@ rabbitMQ:
     dockerIP: rabbitMQ-container-0
     dockerComposeIP: rabbitMQ-service-0
     port: 5672
-    
   channelName:
     email: email
+
 mongo:
   username: bookstore_user
   password: ${BOOKSTORE_MONGO_PASSWORD}
@@ -40,21 +45,25 @@ mongo:
 gate:
   localIP: "127.0.0.1"
   port: 3000 
+
 microAccount:
   localIP: "127.0.0.1"
   dockerIP: micro-account-container
   dockerComposeIP : micro-account-service
   port: 9501
+
 microBook: 
   localIP: "127.0.0.1"
   dockerIP: micro-book-container
   dockerComposeIP : micro-book-service
   port: 9502
+
 microTransection: 
   localIP: "127.0.0.1"
   dockerIP: micro-transection-container
   dockerComposeIP : micro-transection-service
   port: 9503
+
 microMail:
   url:
     localIP: "127.0.0.1"

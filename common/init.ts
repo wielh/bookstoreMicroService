@@ -8,8 +8,6 @@ import {google}  from "googleapis";
 import {OAuth2Client} from 'google-auth-library';
 import {Client} from '@elastic/elasticsearch';
 
-import { infoLogger } from './utils.js';
-
 interface URL {
   localIP: string,
   dockerIP: string,
@@ -22,6 +20,10 @@ interface Config {
     tokenKey: string
     tokenExpireSecond: number
     emailExpireSecond: number
+    rateLimit: number
+      intervalms: number
+      limitSingalIP: number
+      limitAll: number
   }
   googleOauth2: {
     googleVerifyID: string
