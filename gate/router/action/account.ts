@@ -8,7 +8,6 @@ import { googleCallbackUrl, GlobalConfig, accountServiceURL} from '../../../comm
 import { decodeToken, warnLogger} from '../../../common/utils.js'
 import {errParameter, errMicroServiceNotResponse, errSuccess, errGoogleToken, errToken} from '../../../common/errCode.js'
 import * as a from '../../../proto/account.js'
-import {verifyToken} from './common.js'
 import {AccountServiceClient} from '../../../proto/account.js'
 
 export function registerServiceAccount(): Router {
@@ -49,10 +48,10 @@ export function registerServiceAccount(): Router {
         login
     )
 
-    router.use(verifyToken)
     router.put('/reset_password', 
         json(),
         [
+            body("username").isString().withMessage("field username should be string"),
             body("password").isString().withMessage("field password should be string"),
             body("newPassword").isString().withMessage("field newPassword should be string"),
         ], 
@@ -120,22 +119,22 @@ async function registerVerify(req:Request, res:Response):Promise<void>{
        return
     }
 
-    let account = new a.Base()
     let tokenStr = req.query.token as string
+    let userID = ""
     try {
         const tokenJson = decodeToken(tokenStr);
-        if( tokenJson === null ) {
+        if(!tokenJson) {
             res.status(400).json({errCode: errToken});
             return
         } 
-        const {username} = tokenJson
-        account.username = username
+        const {userId} = tokenJson
+        userID = userId
     } catch (error) {
         res.status(400).json({errCode: errToken});
     }
 
     let grpcReq = new a.RegisterVerifyRequest
-    grpcReq.base = account
+    grpcReq.userId = userID
     accountServiceClient.registerVerify(grpcReq,(error, response) => {
         if (error || !response) {
             res.status(500).json({errCode: errMicroServiceNotResponse});
@@ -193,8 +192,7 @@ async function resetPassword(req:Request, res:Response):Promise<void> {
        return
     }
 
-    const username = req.username
-    const {password, newPassword} = req.body;
+    const {username, password, newPassword} = req.body;
     let grpcReq = new a.ResetPasswordRequest
     let account = new a.Base()
     account.username = username

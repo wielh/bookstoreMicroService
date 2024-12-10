@@ -52,24 +52,22 @@ export function castToStringArray(values: any): string[] {
 }
 
 class UserTokenVal {
-    username: string;
-    accountType: number;
+    userId: string;
     email?: string;
 
     constructor(j: jwt.JwtPayload){
-        this.username = j.username;
-        this.accountType = parseInt(j.accountType,10);
+        this.userId = j.userId;
         this.email = (j.email || "" )
     }
 }
 
-export function decodeToken(token:string):UserTokenVal {
+export function decodeToken(token:string): UserTokenVal| null {
     try {
         const val = jwt.verify(token, GlobalConfig.API.tokenKey) as jwt.JwtPayload; 
-        if (val && typeof val.username === 'string' && typeof val.accountType === 'number') {
+        if (val && typeof val.userId === 'string') {
             return new UserTokenVal(val);
         } else {
-        return null
+            return null
         }
     } catch(e){
         return null;

@@ -22,11 +22,10 @@ message ActivityReponseData {
 }
 
 message TransectionRequest {
-    string username = 1;
-    int32 userType = 2;
-    string activityID = 3;
-    int32 activityType = 4;
-    repeated BookInfo bookInfo = 5;
+    string userId = 1;
+    string activityID = 2;
+    int32 activityType = 3;
+    repeated BookInfo bookInfo = 4;
 }
 
 message BookInfo {
@@ -44,7 +43,7 @@ message TransectionResponse {
 }
 
 message TransectionRecordRequest {
-    string username = 1;
+    string userId = 1;
     int32 accountType = 2;
     int32 page = 3;
     int32 pageSize = 4;
@@ -59,7 +58,7 @@ message TransectionRecord {
 
 message TransectionRecordResponse {
     int32 errCode = 1; 
-    string username = 2;
+    string userId = 2;
     int32 recordNumber = 3;
     int32 page = 4;
     int32 pageSize = 5;

@@ -23,7 +23,7 @@
  * 要使用 grpc 在微服務之間通信，需要安裝  protobuf-compiler, protoc-gen-ts，安裝完成後使用以下指令編譯 proto 檔案
 
  ```
-  protoc -I="." --ts_out="."  .\proto\*.proto
+  protoc -I="." --ts_out="."  ./proto/*.proto
 ```
 
  * elastic 是紀錄與搜尋 log 的引擎程式，而 kibana 是 elastic 的可視化程式。搜尋 log 的功能主要是在左上角 "discover" 欄位。
@@ -42,6 +42,10 @@ node mongo-setting/mongo-script.js
 + 為了啟用 transection，需要設定 mongodb 的 replica-set
 
 + 安裝 protobuf-compiler, protoc-gen-ts 後編譯 proto 檔案
+
+ ```
+  protoc -I="." --ts_out="."  ./proto/*.proto
+```
 
 + 到 gate 以及 micro-XXX 資料夾底下使用指令 tsc 編譯
 

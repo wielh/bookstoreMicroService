@@ -6,8 +6,7 @@ import * as mongoose from 'mongoose';
 mongooseLong(mongoose)
 
 class transectionLogDocument extends Document{
-    username : string
-    accountType : number
+    userId : string
     activityID : string
     activityType : number
     time : mongoose.Types.Long
@@ -21,8 +20,7 @@ class transectionLogDocument extends Document{
 }
 
 const transectionLogSchema = new Schema({
-    username: {type:String, required:true} ,
-    accountType: {type:Number, default:0},
+    userId: {type:String, required:true} ,
     activityID: {type:String, default:""},
     time: {type:mongoose.Types.Long, required:true}
 },{
@@ -32,13 +30,12 @@ const transectionLogSchema = new Schema({
 
 export var transectionLogModel = model<transectionLogDocument>('transection_log', transectionLogSchema,'transection_log')
 
-export async function insertLog(username:string, accountType:number, activityID: string, activityType:number , time: number, totalPrice:number, 
-    bookInfo:{bookId:string ,bookNumber : number, price:number}[], session: ClientSession){
+export async function insertLog(userId: string, activityID: string, activityType:number , time: number, totalPrice:number, 
+    bookInfo:{bookId:string ,bookNumber: number, price:number}[], session: ClientSession){
 
     await transectionLogModel.create(
         [{
-            username:username, 
-            accountType:accountType, 
+            userId:userId, 
             activityID:activityID, 
             activityType:activityType, 
             time:mongoose.Types.Long.fromNumber(time), 

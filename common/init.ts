@@ -20,6 +20,7 @@ interface Config {
     tokenKey: string
     tokenExpireSecond: number
     emailExpireSecond: number
+    env: string
     rateLimit: number
       intervalms: number
       limitSingalIP: number
@@ -146,15 +147,20 @@ async function urlInit() {
 
   let mongoStr = `mongodb://${gc.mongo.username}:${gc.mongo.password}@${getUrl(gc.mongo.url)}/${gc.mongo.dbName}?replicaSet=${gc.mongo.replicaSet}
     &directConnection=${gc.mongo.directConnection}&serverSelectionTimeoutMS=${gc.mongo.serverSelectionTimeoutMS}&authSource=${gc.mongo.authSource}`
-  await mongoose.connect(mongoStr);
 
-  elasticClient = new Client({node: `http://${getUrl(gc.elastic)}`, maxRetries:3});
+  if(GlobalConfig.API.env != "unitTest") {
+    await mongoose.connect(mongoStr);
+  }
+
+  if(GlobalConfig.API.env != "unitTest") {
+    elasticClient = new Client({node: `http://${getUrl(gc.elastic)}`, maxRetries:3});
+  }
+
   log = createLogger({
       level: 'info',
       format: format.json(),
       transports: [new transports.Console()],
   });
-
   rabbitMQConenctionStr = `amqp://${gc.rabbitMQ.username}:${gc.rabbitMQ.password}@${getUrl(gc.rabbitMQ.url)}/`;
   accountServiceURL = getUrl(GlobalConfig.microAccount)
   transectionServiceURL = getUrl(GlobalConfig.microTransection)
@@ -162,10 +168,13 @@ async function urlInit() {
 }
 
 async function start() {
+  const start = Date.now();
   loadConfig()
   getIPMode()
   await urlInit()
-  console.log("googleVerificationUrl:", googleVerificationUrl)
+  // console.log("googleVerificationUrl:", googleVerificationUrl)
+  const end = Date.now();
+  console.log("API初始化共耗費:", end - start, "ms")
 }
 
 await start()

@@ -151,12 +151,10 @@ async function transection(req:Request, res:Response):Promise<void> {
     }
 
     const { activityID, activityType, bookInfo} = req.body;
-    const username = req.username
-    const userType = req.accountType
+    const userId = req.userId
 
     let grpcReq = new  transectionProto.TransectionRequest()
-    grpcReq.username = username
-    grpcReq.userType = userType
+    grpcReq.userId = userId
     grpcReq.activityID = activityID
     grpcReq.activityType = parseInt(activityType)
     grpcReq.bookInfo = []
@@ -167,7 +165,7 @@ async function transection(req:Request, res:Response):Promise<void> {
         grpcReq.bookInfo.push(book)
     }
  
-    infoLogger(grpcReq.username,"A new transection request start", grpcReq)
+    infoLogger(grpcReq.userId,"A new transection request start", [userId, activityID, activityType, bookInfo])
     transectionServiceClient.transection(grpcReq,(err, response) => {
             if (err || !response) {
                 res.status(500).json({errCode: errMicroServiceNotResponse});
@@ -244,12 +242,9 @@ async function transectionRecord(req:Request, res:Response) {
     }
 
     const  { page, pageSize } = req.query;
-    const username = req.username
-    const accountType = req.accountType
 
     let grpcReq = new  transectionProto.TransectionRecordRequest()
-    grpcReq.username = username
-    grpcReq.accountType = accountType
+    grpcReq.userId = req.userId
     let i = parseInt(castToString(page), 10);
     grpcReq.page = i 
     i = parseInt(castToString(pageSize), 10);

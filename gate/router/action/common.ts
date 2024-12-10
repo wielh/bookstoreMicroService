@@ -10,8 +10,7 @@ export async function verifyToken(req: Request, res: Response, next:NextFunction
     }
 
     const tokenJson = decodeToken(cookie as string);
-    req.username = tokenJson.username
-    req.accountType = tokenJson.accountType
+    req.userId = tokenJson.userId
     next()
 }
 

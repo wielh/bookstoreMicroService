@@ -1,6 +1,6 @@
 
 
-import { Schema, Document, model, ClientSession} from 'mongoose';
+import { Schema, Document, model, ClientSession, Types} from 'mongoose';
 import { accountType } from '../init.js'
 import { comparePassword, passwordHash} from '../utils.js'
 
@@ -17,6 +17,16 @@ class NormalUserDocument extends UserDocument {
     emailVerified : Number
 }
 
+class GoogleUserDocument extends UserDocument {
+    accountType: number
+    googleID: string
+}
+
+const UserSchema = new Schema({},{
+    versionKey: false, 
+    strict: false
+});
+
 const NormalUserSchema = new Schema({
     accountType: {type:Number, default:accountType.normal},
     username: {type:String, require: true},
@@ -27,10 +37,6 @@ const NormalUserSchema = new Schema({
     strict: false
 });
 
-class GoogleUserDocument extends UserDocument {
-    accountType: number
-    googleID: string
-}
 
 const GoogleUserSchema = new Schema({
     accountType: {type:Number, default: accountType.google},
@@ -40,29 +46,44 @@ const GoogleUserSchema = new Schema({
     strict: false
 });
 
+const UserModel = model<UserDocument>('User', UserSchema, "user")
+
 const NormalUserModel = model<NormalUserDocument>('NormalUser', NormalUserSchema, "user")
 
 const GoolgeUserModel = model<GoogleUserDocument>('GoolgeUser', GoogleUserSchema, "user")
 
-export async function normalUserExist(username:string): Promise<boolean> {
+export async function normalUserExist(username:string): Promise<string> {
     let doc = await NormalUserModel.findOne({username:username, accountType:accountType.normal})
-    return !(doc === null)
+    if (!doc || !doc._id) {
+        return ""
+    }
+    return doc._id.toString()
 }
 
-export async function normalUserExistWithPWD(username:string, password:string): Promise<boolean> {
+export async function normalUserExistWithPWD(username:string, password:string): Promise<string> {
     let doc = await NormalUserModel.findOne({username:username, accountType:accountType.normal})
     if( !doc ) {
-        return false
+        return ""
     }
 
     const exist = await comparePassword(password, doc.password.toString())
-
-    return exist
+    if (!exist) {
+        return ""
+    }
+    return doc._id.toString()
 }
 
-export async function insertNormalUser(username:string, password:string, email:string, name:string): Promise<void> {
-    await NormalUserModel.create({
-        username:username, password: await passwordHash(password), email: email, name:name, accountType:accountType.normal, balance:0, emailVerified: 0 })
+export async function insertNormalUser(username:string, password:string, email:string, name:string): Promise<string> {
+    return await NormalUserModel.create({
+        username:username, password: 
+        await passwordHash(password), 
+        email: email, name:name, 
+        accountType:accountType.normal, 
+        balance:0, 
+        emailVerified: 0 
+    }).then(
+        (doc) => doc._id.toString()
+    )
 }
 
 export async function resetPassword(username:string, password:string, newPassword:string): Promise<boolean> {
@@ -81,41 +102,32 @@ export async function normalEmailCheckAndChange(username:string, email:string): 
     return !(doc==null)
 }
 
-export async function normalEmailVerify(username:string): Promise<boolean> {
-    let doc = await NormalUserModel.findOneAndUpdate({username:username, accountType:accountType.normal, emailVerified: 0},{$set:{emailVerified:1}})
+export async function normalEmailVerify(userId: string): Promise<boolean> {
+    let doc = await NormalUserModel.findOneAndUpdate({id: new Types.ObjectId(userId), emailVerified: 0},{$set:{emailVerified:1}})
     return !(doc==null)
 }
 
-export async function googleUserExist(googleID:string): Promise<boolean> {
+export async function googleUserExist(googleID:string): Promise<string> {
     let doc = await GoolgeUserModel.findOne({googleID:googleID, accountType:accountType.google})
+    if (!doc) {
+        return ""
+    }
+    return doc._id.toString()
+}
+
+export async function insertGoogleUser(googleID:string, googleName:string, email:string): Promise<string> {
+    return await GoolgeUserModel.create({
+        googleID: googleID, name:googleName , email:email,  accountType:accountType.google, balance:0, emailVerified:1}).then(
+            (doc) => doc._id.toString()
+        )
+}
+
+export async function userExistByID(Id:string): Promise<boolean> {
+    let doc = await UserModel.findById(Id)
     return !(doc==null)
 }
 
-export async function insertGoogleUser(googleID:string, googleName:string, email:string): Promise<void> {
-    await GoolgeUserModel.create({
-        googleID: googleID, name:googleName , email:email,  accountType:accountType.google, balance:0, emailVerified:1})
-}
-
-export async function userExist(name:string, type:number): Promise<boolean> {
-    switch(type) {
-        case accountType.normal:
-            return await normalUserExist(name)
-        case accountType.google:
-            return await googleUserExist(name)
-        default:
-            return false
-    }
-}
-
-export async function transection(username:string, accountType:number, gold:number, session: ClientSession): Promise<boolean> {
-    switch(accountType) {
-        case 0:
-            let r0 =  await NormalUserModel.updateOne({username:username, accountType:accountType, balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
-            return r0.modifiedCount > 0
-        case 1:
-            let r1 =  await GoolgeUserModel.updateOne({googleID:username, accountType:accountType, balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
-            return r1.modifiedCount > 0
-        default:
-            return false
-    }
+export async function transection(userId:string, gold:number, session: ClientSession): Promise<boolean> {
+    let r = await UserModel.updateOne({_id: new Types.ObjectId(userId), balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
+    return r.modifiedCount > 0
 }

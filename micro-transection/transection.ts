@@ -14,18 +14,19 @@ import * as activityDB from '../common/model/activity.js'
 export async function transection(call: ServerUnaryCall<TransectionRequest,TransectionResponse>, callback: sendUnaryData<TransectionResponse>) {
     let res:TransectionResponse = new TransectionResponse()
     let req = call.request
+    let data: any[] = [req.userId, req.activityID, req.activityType, req.bookInfo]
 
-    infoLogger(req.username, "A new transection request started", call.request)
-    let userExist = false
+    infoLogger(req.userId, "A new transection request started", data)
+    let existed = false
     try {
-        userExist = await userDB.userExist(req.username, req.userType)
-        if (!userExist) {
+        existed = await userDB.userExistByID(req.userId)
+        if (!existed) {
             res.errCode = errUserNotExist
             callback(null,res)
             return
         }
     } catch (error) {
-        errorLogger("", "A mongoErr happens while searching user", call.request, error)
+        errorLogger(req.userId, "A mongoErr happens while searching user", data, error)
         res.errCode = errMongo
         callback(error,res)
         return
@@ -36,7 +37,7 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
     try {
         answer = await calculatePrice(req)
         if (answer == null) {
-            warnLogger(req.username, "Format of request is incorrect", call.request, null)
+            warnLogger(req.userId, "Format of request is incorrect", data, null)
             callback(null,res)
             return
         } else if (answer.errCode != errSuccess) {
@@ -45,7 +46,7 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
         }
         answer.toTransectionResponse(res)
     } catch (error) {
-        errorLogger("", "A mongoErr happens while calculating price", call.request, error)
+        errorLogger(req.userId, "A mongoErr happens while calculating price", data, error)
         res.errCode = errMongo
         callback(error,res)
         return
@@ -56,10 +57,10 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
     let success = false
     try { 
         session.startTransaction();
-        success = await userDB.transection(req.username, req.userType, answer.totalPrice, session)
+        success = await userDB.transection(req.userId, answer.totalPrice, session)
         if (!success) {
             res.errCode = errGoldNotEnought
-            warnLogger(req.username, "Gold not enought", call.request, null)
+            warnLogger(req.userId, "Gold not enought", data, null)
             await session.abortTransaction()
             callback(null,res)
             return
@@ -68,26 +69,25 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
             success = await bookDB.takeBooks(book.bookId, book.bookNumber, session)
             if (!success) {
                 res.errCode = errBookNotEnought
-                warnLogger(req.username, "Book not enought", call.request, null)
+                warnLogger(req.userId, "Book not enought", data, null)
                 await session.abortTransaction()
                 callback(null,res)
                 return
             }
         }
         
-        await transectionDB.insertLog(
-            req.username, req.userType, req.activityID,  req.activityType, answer.transectionTime, answer.totalPrice, answer.booksInfo, session) 
+        await transectionDB.insertLog(req.userId, req.activityID, req.activityType, answer.transectionTime, answer.totalPrice, answer.booksInfo, session) 
         success = await transectionDB.updateBalance(answer.transectionTime, answer.totalPrice, session)
         if (!success) {
             res.errCode = errUpdateIncomeFailed
-            errorLogger(req.username, "Update balance failed", req, null)
+            errorLogger(req.userId, "Update balance failed", data, null)
             await session.abortTransaction()
             callback(null,res)
             return
         }
         await session.commitTransaction()
     } catch (error) {
-        errorLogger(req.username, "A mongoErr happens while writeing DB", req, error)
+        errorLogger(req.userId, "A mongoErr happens while writeing DB", data, error)
         await session.abortTransaction()
         res.errCode = errMongo
         callback(error,res)
@@ -97,18 +97,19 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
     }
 
     res.errCode = errSuccess
-    infoLogger(req.username, "A new transection request end", [req, res])
+    infoLogger(req.userId, "A new transection request end", data)
     callback(null,res)
 }
 
 export async function transectionRecord(call: ServerUnaryCall<TransectionRecordRequest, TransectionRecordResponse>, callback: sendUnaryData<TransectionRecordResponse>) {
     let req = call.request
     let res = new TransectionRecordResponse()
+    let data = [req.userId, req.page, req.pageSize]
     let count = 0 
     try {
-        count = await transectionDB.countLog(req.username ,req.accountType)
+        count = await transectionDB.countLog(req.userId ,req.accountType)
     } catch (error) {
-        errorLogger(req.username, "mongoErr happens while counting transection log", req, error)
+        errorLogger(req.userId, "mongoErr happens while counting transection log", data, error)
         res.errCode = errMongo
         callback(error,res)
     }
@@ -117,7 +118,7 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
     let record: TransectionRecord
     let p = new pageX(req.pageSize, count)
     try {
-        let logs = await transectionDB.getLogData(req.username, req.accountType, p, req.page)
+        let logs = await transectionDB.getLogData(req.userId, req.accountType, p, req.page)
         for (let log of logs) {
             record = new TransectionRecord()
             record.transectionTime = log.time.toNumber()
@@ -128,20 +129,14 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
                     case 1:
                         record.appliedActivityData.activityInfo = JSON.stringify(a.levelType1) 
                         record.appliedActivityData.activityType = a.type
-                        record.appliedActivityData.startDate = a.startDate.toNumber()
-                        record.appliedActivityData.endDate = a.startDate.toNumber()
                         break;
                     case 2:
                         record.appliedActivityData.activityInfo = JSON.stringify(a.levelType2) 
                         record.appliedActivityData.activityType = a.type
-                        record.appliedActivityData.startDate = a.startDate.toNumber()
-                        record.appliedActivityData.endDate = a.startDate.toNumber()
                         break;
                     case 3:
                         record.appliedActivityData.activityInfo = JSON.stringify(a.levelType3) 
                         record.appliedActivityData.activityType = a.type
-                        record.appliedActivityData.startDate = a.startDate.toNumber()
-                        record.appliedActivityData.endDate = a.startDate.toNumber()
                         break;
                     default :
                         record.appliedActivityData.activityInfo = ""
@@ -162,12 +157,13 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
             records.push(record)
         }
     } catch (error) {
-        errorLogger(req.username, "mongoErr happens while searching transection log", call.request,error)
+        errorLogger(req.userId, "mongoErr happens while searching transection log", data, error)
         res.errCode = errMongo
         callback(error,res)
     }
 
     res.errCode = errSuccess
+    res.userId = req.userId
     res.recordNumber = count
     res.page = p.getPageNumber(req.page)
     res.pageSize = p.pageSize

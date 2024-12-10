@@ -28,8 +28,7 @@ registerRouter(app)
 
 declare module 'express-serve-static-core' {
     interface Request {
-      username?: string;
-      accountType?: number
+      userId?: string;
     }
 }
 

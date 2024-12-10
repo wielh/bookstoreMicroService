@@ -2,6 +2,7 @@ API:
   tokenKey: ${BOOKSTORE_TOKEN_KEY}
   tokenExpireSecond: 86400
   emailExpireSecond: 3600
+  env: "Test"
   rateLimit:
     intervalms: 60000
     limitSingalIP: 100

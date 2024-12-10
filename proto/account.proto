@@ -64,7 +64,7 @@ message ResetPasswordResponse {
 }
 
 message RegisterVerifyRequest {
-    Base base = 1;
+    string userId = 1;
 }
 
 message RegisterVerifyResponse {

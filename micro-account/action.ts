@@ -4,11 +4,11 @@ import { GooogleLoginRequest, GooogleLoginResponse, LoginRequest, LoginResponse,
     ResendRegisterVerifyEmailResponse,RegisterVerifyRequest,RegisterVerifyResponse} from "../proto/account.js";
 import {errSuccess, errMongo, errUserExist, errUserNotExist, errSendRegisterEmailFailed, errEmailVerifited} from '../common/errCode.js'
 import {createToken, sendMailProducer, errorLogger, getRabbitMQConnection} from '../common/utils.js'
-import {accountType, GlobalConfig} from '../common/init.js'
+import {GlobalConfig} from '../common/init.js'
 import * as userDB from '../common/model/user.js'
 
-async function resendRegiterVerifyEmailImplementation(username:string, email:string): Promise<number> {
-    let verificationCode = createToken({username:username, accountType: accountType.normal , email:email}, GlobalConfig.API.emailExpireSecond)
+async function resendRegiterVerifyEmailImplementation(username:string, userId:string, email:string): Promise<number> {
+    let verificationCode = createToken({userId: userId , email:email}, GlobalConfig.API.emailExpireSecond)
     const emailInfo =
         ` Hello, user ${username}, this is QueenStore bookstore.` +
         ` Please enter the website: ${GlobalConfig.gate.localIP}:${GlobalConfig.gate.port}/account/register_verify?token=${verificationCode} `+
@@ -22,9 +22,11 @@ async function resendRegiterVerifyEmailImplementation(username:string, email:str
 export async function register(call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>, callback: grpc.sendUnaryData<RegisterResponse>): Promise<void> {
     let req = call.request
     let res = new RegisterResponse()
+
+    let userId = ""
     try {
-        let userExist = await userDB.normalUserExist(req.base.username)
-        if (userExist) {
+        userId = await userDB.normalUserExist(req.base.username)
+        if (userId) {
             res.errcode = errUserExist
             callback(null, res)
             return
@@ -37,7 +39,7 @@ export async function register(call: grpc.ServerUnaryCall<RegisterRequest, Regis
     }
 
     try {
-        await userDB.insertNormalUser(req.base.username, req.base.password, req.email , req.name)
+        userId = await userDB.insertNormalUser(req.base.username, req.base.password, req.email , req.name)
     } catch (error) {
         errorLogger(req .base.username, "mongoErr happens while insert new data to collection user", req, error)
         res.errcode = errMongo
@@ -45,16 +47,17 @@ export async function register(call: grpc.ServerUnaryCall<RegisterRequest, Regis
         return
     }
 
-    res.errcode = await resendRegiterVerifyEmailImplementation(req.base.username,req.email)
+    res.errcode = await resendRegiterVerifyEmailImplementation(req.base.username, userId, req.email)
     callback(null,res)
 }
 
 export async function resendRegisterVerifyEmail(call: grpc.ServerUnaryCall<ResendRegisterVerifyEmailRequest,ResendRegisterVerifyEmailResponse>, callback: grpc.sendUnaryData<ResendRegisterVerifyEmailResponse>) {
     let req = call.request
     let res = new ResendRegisterVerifyEmailResponse()
+    let userId = ""
     try {
-        let exist = await userDB.normalUserExistWithPWD(req.base.username, req.base.password)
-        if (!exist) {
+        userId = await userDB.normalUserExistWithPWD(req.base.username, req.base.password)
+        if (!userId) {
             res.errcode = errUserNotExist
             callback(null, res)
             return
@@ -80,7 +83,7 @@ export async function resendRegisterVerifyEmail(call: grpc.ServerUnaryCall<Resen
         return
     }
 
-    res.errcode = await resendRegiterVerifyEmailImplementation(req.base.username,req.email)
+    res.errcode = await resendRegiterVerifyEmailImplementation(req.base.username, userId, req.email)
     callback(null,res)
 } 
 
@@ -88,14 +91,14 @@ export async function registerVerify(call: grpc.ServerUnaryCall<RegisterVerifyRe
     let req = call.request
     let res = new RegisterVerifyResponse()
     try {
-        let notVerified = userDB.normalEmailVerify(req.base.username)
+        let notVerified = userDB.normalEmailVerify(req.userId)
         if (!notVerified) {
             res.errcode = errEmailVerifited
             callback(null, res)
             return
         }
     } catch (error) {
-        errorLogger(req.base.username,  "mongoErr happens while searching user", call.request,error)
+        errorLogger(req.userId,  "mongoErr happens while searching user", call.request,error)
         res.errcode = errMongo
         callback(error,res)
         return
@@ -106,9 +109,9 @@ export async function registerVerify(call: grpc.ServerUnaryCall<RegisterVerifyRe
 export async function googleLogin(call: grpc.ServerUnaryCall<GooogleLoginRequest, GooogleLoginResponse>, callback: grpc.sendUnaryData<GooogleLoginResponse>):Promise<void> {
     let req = call.request
     let res = new GooogleLoginResponse()
-    let exist = true
+    let userId = ""
     try {
-        exist = await userDB.googleUserExist(req.googleID)
+        userId = await userDB.googleUserExist(req.googleID)
     } catch (error) {
         errorLogger(req.googleID.toString(), "mongoErr happens while searching user", call.request,error)
         res.errcode = errMongo
@@ -116,9 +119,9 @@ export async function googleLogin(call: grpc.ServerUnaryCall<GooogleLoginRequest
         return
     }
 
-    if (!exist) {
+    if (!userId) {
         try {  
-            await userDB.insertGoogleUser(req.googleID,req.googleName,req.googleEmail)
+            userId = await userDB.insertGoogleUser(req.googleID, req.googleName, req.googleEmail)
         } catch (error) {
             errorLogger(req.googleID.toString(), "mongoErr happens while insert new user", req, error)
             res.errcode = errMongo
@@ -126,16 +129,17 @@ export async function googleLogin(call: grpc.ServerUnaryCall<GooogleLoginRequest
             return
         }
     }
-    res.token = createToken({username:req.googleID.toString(), accountType:accountType.google}, GlobalConfig.API.tokenExpireSecond)
+    res.token = createToken({userId: userId}, GlobalConfig.API.tokenExpireSecond)
     res.errcode = errSuccess
     callback(null,res)
 }
 
 export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginResponse>, callback: grpc.sendUnaryData<LoginResponse>): Promise<void> {
     let res = new LoginResponse()
+    let userId = ""
     try {
-        let exist = await userDB.normalUserExistWithPWD(call.request.base.username, call.request.base.password)
-        if (!exist) {
+        userId = await userDB.normalUserExistWithPWD(call.request.base.username, call.request.base.password)
+        if (!userId) {
             res.errcode = errUserNotExist
             callback(null, res)
             return
@@ -147,7 +151,7 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
         return
     }
 
-    res.token = createToken({username:call.request.base.username, accountType: accountType.normal}, GlobalConfig.API.tokenExpireSecond)
+    res.token = createToken({userId:userId}, GlobalConfig.API.tokenExpireSecond)
     res.errcode = errSuccess
     callback(null, res)
 }
