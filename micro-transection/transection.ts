@@ -6,10 +6,7 @@ import {TransectionRequest, TransectionResponse, TransectionRecordRequest, Trans
 import { errMongo, errSuccess, errUserNotExist, errGoldNotEnought, errUpdateIncomeFailed, errBookNotEnought} from '../common/errCode.js'
 import { pageX, errorLogger, warnLogger, infoLogger} from '../common/utils.js'
 import { calculatePrice, TransectionResult} from './priceCalculate.js'
-import * as bookDB from '../common/model/book.js'
-import * as userDB from '../common/model/user.js'
-import * as transectionDB from '../common/model/transection.js'
-import * as activityDB from '../common/model/activity.js'
+import { userRepo, bookRepo, transectionLogRepo, balanceRepo, activityRepo } from "../common/repository/init.js"
 
 export async function transection(call: ServerUnaryCall<TransectionRequest,TransectionResponse>, callback: sendUnaryData<TransectionResponse>) {
     let res:TransectionResponse = new TransectionResponse()
@@ -19,7 +16,7 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
     infoLogger(req.userId, "A new transection request started", data)
     let existed = false
     try {
-        existed = await userDB.userExistByID(req.userId)
+        existed = await userRepo.userExistByID(req.userId)
         if (!existed) {
             res.errCode = errUserNotExist
             callback(null,res)
@@ -57,7 +54,7 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
     let success = false
     try { 
         session.startTransaction();
-        success = await userDB.transection(req.userId, answer.totalPrice, session)
+        success = await userRepo.transection(req.userId, answer.totalPrice, session)
         if (!success) {
             res.errCode = errGoldNotEnought
             warnLogger(req.userId, "Gold not enought", data, null)
@@ -66,7 +63,7 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
             return
         }
         for (let book of req.bookInfo) {
-            success = await bookDB.takeBooks(book.bookId, book.bookNumber, session)
+            success = await bookRepo.takeBooks(book.bookId, book.bookNumber, session)
             if (!success) {
                 res.errCode = errBookNotEnought
                 warnLogger(req.userId, "Book not enought", data, null)
@@ -76,8 +73,8 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
             }
         }
         
-        await transectionDB.insertLog(req.userId, req.activityID, req.activityType, answer.transectionTime, answer.totalPrice, answer.booksInfo, session) 
-        success = await transectionDB.updateBalance(answer.transectionTime, answer.totalPrice, session)
+        await transectionLogRepo.insertLog(req.userId, req.activityID, req.activityType, answer.transectionTime, answer.totalPrice, answer.booksInfo, session) 
+        success = await balanceRepo.updateBalance(answer.transectionTime, answer.totalPrice, session)
         if (!success) {
             res.errCode = errUpdateIncomeFailed
             errorLogger(req.userId, "Update balance failed", data, null)
@@ -107,7 +104,7 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
     let data = [req.userId, req.page, req.pageSize]
     let count = 0 
     try {
-        count = await transectionDB.countLog(req.userId)
+        count = await transectionLogRepo.countLog(req.userId)
     } catch (error) {
         errorLogger(req.userId, "mongoErr happens while counting transection log", data, error)
         res.errCode = errMongo
@@ -118,13 +115,13 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
     let record: TransectionRecord
     let p = new pageX(req.pageSize, count)
     try {
-        let logs = await transectionDB.getLogData(req.userId, p, req.page)
+        let logs = await transectionLogRepo.getLogData(req.userId, p, req.page)
         for (let log of logs) {
             record = new TransectionRecord()
             record.transectionTime = log.time
             record.appliedActivityData = new ActivityReponseData()      
             try {
-                let a = await activityDB.findActivityById(log.activityID, log.activityType)
+                let a = await activityRepo.findActivityById(log.activityID, log.activityType)
                 switch(a.type) {
                     case 1:
                         record.appliedActivityData.activityInfo = JSON.stringify(a.levelType1) 

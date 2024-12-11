@@ -5,8 +5,7 @@ import { GooogleLoginRequest, GooogleLoginResponse, LoginRequest, LoginResponse,
 import {errSuccess, errMongo, errUserExist, errUserNotExist, errSendRegisterEmailFailed, errEmailVerifited, errUserIsSuspended} from '../common/errCode.js'
 import {createToken, sendMailProducer, errorLogger, getRabbitMQConnection} from '../common/utils.js'
 import {GlobalConfig} from '../common/init.js'
-import * as userDB from '../common/model/user.js'
-import * as LoginRecord from '../common/model/loginRecord.js'
+import {normalUserRepo, googleUserRepo, userRepo, LoginRecordRepo} from '../common/repository/init.js'
 
 async function resendRegiterVerifyEmailImplementation(username:string, userId:string, email:string): Promise<number> {
     let verificationCode = createToken({userId: userId , email:email}, GlobalConfig.API.emailExpireSecond)
@@ -20,13 +19,13 @@ async function resendRegiterVerifyEmailImplementation(username:string, userId:st
     return sendEmailSuccess?  errSuccess: errSendRegisterEmailFailed
 } 
 
-export async function register(call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>, callback: grpc.sendUnaryData<RegisterResponse>): Promise<void> {
+export async function register(call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>, callback: grpc.sendUnaryData<RegisterResponse>){
     let req = call.request
     let res = new RegisterResponse()
 
     let userId = ""
     try {
-        userId = await userDB.normalUserExist(req.base.username)
+        userId = await normalUserRepo.normalUserExist(req.base.username)
         if (userId) {
             res.errcode = errUserExist
             callback(null, res)
@@ -40,7 +39,7 @@ export async function register(call: grpc.ServerUnaryCall<RegisterRequest, Regis
     }
 
     try {
-        userId = await userDB.insertNormalUser(req.base.username, req.base.password, req.email , req.name)
+        userId = await normalUserRepo.insertNormalUser(req.base.username, req.base.password, req.email , req.name)
     } catch (error) {
         errorLogger(req .base.username, "mongoErr happens while insert new data to collection user", req, error)
         res.errcode = errMongo
@@ -57,7 +56,7 @@ export async function resendRegisterVerifyEmail(call: grpc.ServerUnaryCall<Resen
     let res = new ResendRegisterVerifyEmailResponse()
     let userId = ""
     try {
-        userId = await userDB.normalUserExistWithPWD(req.base.username, req.base.password)
+        userId = await normalUserRepo.normalUserExistWithPWD(req.base.username, req.base.password)
         if (!userId) {
             res.errcode = errUserNotExist
             callback(null, res)
@@ -71,7 +70,7 @@ export async function resendRegisterVerifyEmail(call: grpc.ServerUnaryCall<Resen
     }
 
     try {
-        let exist = await userDB.normalEmailCheckAndChange(req.base.username, req.email)
+        let exist = await normalUserRepo.normalEmailCheckAndChange(req.base.username, req.email)
         if (!exist) {
             res.errcode = errUserNotExist
             callback(null, res)
@@ -92,7 +91,7 @@ export async function registerVerify(call: grpc.ServerUnaryCall<RegisterVerifyRe
     let req = call.request
     let res = new RegisterVerifyResponse()
     try {
-        let notVerified = userDB.normalEmailVerify(req.userId)
+        let notVerified = normalUserRepo.normalEmailVerify(req.userId)
         if (!notVerified) {
             res.errcode = errEmailVerifited
             callback(null, res)
@@ -112,7 +111,7 @@ export async function googleLogin(call: grpc.ServerUnaryCall<GooogleLoginRequest
     let res = new GooogleLoginResponse()
     let userId = ""
     try {
-        userId = await userDB.googleUserExist(req.googleID)
+        userId = await googleUserRepo.googleUserExist(req.googleID)
     } catch (error) {
         errorLogger(req.googleID.toString(), "mongoErr happens while searching user", call.request,error)
         res.errcode = errMongo
@@ -122,7 +121,7 @@ export async function googleLogin(call: grpc.ServerUnaryCall<GooogleLoginRequest
 
     if (!userId) {
         try {  
-            userId = await userDB.insertGoogleUser(req.googleID, req.googleName, req.googleEmail)
+            userId = await googleUserRepo.insertGoogleUser(req.googleID, req.googleName, req.googleEmail)
         } catch (error) {
             errorLogger(req.googleID.toString(), "mongoErr happens while insert new user", req, error)
             res.errcode = errMongo
@@ -139,7 +138,7 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
     let res = new LoginResponse()
     let userId = ""
     try {
-        userId = await userDB.normalUserExist(call.request.base.username)
+        userId = await normalUserRepo.normalUserExist(call.request.base.username)
         if (!userId) {
             res.errcode = errUserNotExist
             callback(null, res)
@@ -153,9 +152,9 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
     }
 
     try {
-        if (!(await userDB.normalUserExistWithPWD(call.request.base.username, call.request.base.password))) {
+        if (!(await normalUserRepo.normalUserExistWithPWD(call.request.base.username, call.request.base.password))) {
             res.errcode = errUserNotExist
-            await LoginRecord.Insert(userId, new Date().getTime(), false)
+            await LoginRecordRepo.Insert(userId, new Date().getTime(), false)
             callback(null, res)
             return
         }
@@ -167,13 +166,13 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
     }
 
     try {
-        let until = await userDB.userIsSuspensed(userId)
+        let until = await userRepo.userIsSuspensed(userId)
         if (until > 0) {
             res.errcode = errUserIsSuspended
             callback(null, res)
             return
         }
-        LoginRecord.Insert(userId, new Date().getTime(), true)
+        LoginRecordRepo.Insert(userId, new Date().getTime(), true)
     } catch(error) {
         errorLogger(call.request.base.username, "mongoErr happens when we check user is suspended", call.request, error)
         res.errcode = errMongo
@@ -190,7 +189,7 @@ export async function resetPassword(call: grpc.ServerUnaryCall<ResetPasswordRequ
     let req = call.request
     let res:ResetPasswordResponse = new ResetPasswordResponse()
     try {
-       let exist = userDB.resetPassword(req.base.username, req.base.password, req.newPassword)
+       let exist = normalUserRepo.resetPassword(req.base.username, req.base.password, req.newPassword)
        if (!exist) {
             res.errcode = errUserNotExist
             callback(null, res)
@@ -206,3 +205,5 @@ export async function resetPassword(call: grpc.ServerUnaryCall<ResetPasswordRequ
     res.errcode = errSuccess
     callback(null,res)
 }
+
+

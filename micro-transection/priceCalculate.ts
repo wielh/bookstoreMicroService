@@ -1,10 +1,10 @@
 
-import {TransectionRequest, TransectionResponse, ActivityReponseData, BookInfo as BookInfoRes} from '../proto/transection.js'
+import { TransectionRequest, TransectionResponse, ActivityReponseData, BookInfo as BookInfoRes} from '../proto/transection.js'
 import { errMongo, errSuccess} from '../common/errCode.js'
 import { errorLogger } from '../common/utils.js'
 
-import * as bookDB from '../common/model/book.js'
-import * as activityDB from '../common/model/activity.js'
+import { activityRepo, bookRepo } from '../common/repository/init.js'
+
 
 class BookInfo {
     bookId: string
@@ -50,7 +50,7 @@ async function baseCalculatePrice(req:TransectionRequest, answer:TransectionResu
         bookIdSet.add(book.bookId)
 
         let bookRes = new BookInfo()
-        let bookMongo = await bookDB.getBookById(book.bookId)
+        let bookMongo = await bookRepo.getBookById(book.bookId)
         if (bookMongo == null) {
             continue
         }
@@ -73,7 +73,7 @@ async function baseCalculatePrice(req:TransectionRequest, answer:TransectionResu
 }
 
 async function calculatePriceType1(req:TransectionRequest ,answer:TransectionResult): Promise<TransectionResult>  {
-    let activity = await activityDB.findActivityType1ById(req.activityID, answer.transectionTime)
+    let activity = await activityRepo.findActivityType1ById(req.activityID, answer.transectionTime)
     if (activity == null) {
         return null
     }
@@ -102,7 +102,7 @@ async function calculatePriceType1(req:TransectionRequest ,answer:TransectionRes
 }
 
 async function calculatePriceType2(req:TransectionRequest, answer:TransectionResult): Promise<TransectionResult>  {
-    let activity = await activityDB.findActivityType2ById(req.activityID, answer.transectionTime)
+    let activity = await activityRepo.findActivityType2ById(req.activityID, answer.transectionTime)
     if (activity == null) {
         return null
     } 
@@ -131,7 +131,7 @@ async function calculatePriceType2(req:TransectionRequest, answer:TransectionRes
 }
 
 async function calculatePriceType3(req:TransectionRequest, answer:TransectionResult): Promise<TransectionResult>  {
-    let activity = await activityDB.findActivityType3ById(req.activityID, answer.transectionTime)
+    let activity = await activityRepo.findActivityType3ById(req.activityID, answer.transectionTime)
     if (activity == null) {
         return null
     } 
@@ -157,7 +157,7 @@ async function calculatePriceType3(req:TransectionRequest, answer:TransectionRes
             if (by <= 0 || give <= 0) {
                 continue
             }
-            let book = await bookDB.getBookById(bookInfo.bookId)
+            let book = await bookRepo.getBookById(bookInfo.bookId)
             if( book == null) {
                 continue
             }

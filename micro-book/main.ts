@@ -3,7 +3,7 @@ import {bookServiceURL} from '../common/init.js'
 import {Book, BookListRequest, BookListResponse,UnimplementedBookServiceService, BookData} from "../proto/book.js";
 import {errMongo, errSuccess} from '../common/errCode.js'
 import {pageX , errorLogger, infoLogger, setElasticIndex} from '../common/utils.js'
-import * as bookDB from '../common/model/book.js'
+import {bookRepo} from '../common/repository/init.js'
 
 async function bookList(call: grpc.ServerUnaryCall<BookListRequest, BookListResponse>, callback: grpc.sendUnaryData<BookListResponse>){
     let req = call.request
@@ -11,7 +11,7 @@ async function bookList(call: grpc.ServerUnaryCall<BookListRequest, BookListResp
     let bookCount = 0 
 
     try {
-        bookCount = await bookDB.count(req.bookName, req.tags, req.priceLowerbound, req.priceUpperbound)
+        bookCount = await bookRepo.count(req.bookName, req.tags, req.priceLowerbound, req.priceUpperbound)
     } catch (error) {
         errorLogger("", "mongoErr happens while searching book", req, error)
         res.errcode = errMongo
@@ -23,7 +23,7 @@ async function bookList(call: grpc.ServerUnaryCall<BookListRequest, BookListResp
     let books: Book[] = []
     let book: Book
     try {
-        let data = await bookDB.getbookData(req.bookName,req.tags,req.priceLowerbound,req.priceUpperbound, req.pageSize, req.page, bookCount)
+        let data = await bookRepo.getbookData(req.bookName,req.tags,req.priceLowerbound,req.priceUpperbound, req.pageSize, req.page, bookCount)
         for(let bookData of data) {
             if (bookData.price <= 0 || bookData.remainNumber <=0 ){
                 continue

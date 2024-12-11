@@ -2,7 +2,7 @@ import {ActivityRequest,ActivityReponse, ActivityReponseData} from '../proto/tra
 import * as grpc from "@grpc/grpc-js";
 import { errorLogger} from '../common/utils.js'
 import { errMongo, errSuccess} from '../common/errCode.js'
-import * as activityDB from '../common/model/activity.js'
+import { activityRepo } from '../common/repository/init.js'
 
 // 1. 打折
 // 2. 買5送1
@@ -14,7 +14,7 @@ export async function activityList(call: grpc.ServerUnaryCall<ActivityRequest,Ac
     let now = new Date().getTime()
 
     try {
-        let activitys = await activityDB.findActivities(now)
+        let activitys = await activityRepo.findActivities(now)
         for (let activity of activitys) {
 
             let activityRes = new ActivityReponseData()

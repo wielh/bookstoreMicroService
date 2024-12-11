@@ -1,7 +1,6 @@
-import { Schema, Document, model, ClientSession } from 'mongoose';
-import { getCurrentMonthFirstDayTimestamp, pageX} from '../utils.js'
+import { Schema, Document } from 'mongoose';
 
-class transectionLogDocument extends Document{
+export class transectionLogDocument extends Document {
     userId : string
     activityID : string
     activityType : number
@@ -15,7 +14,7 @@ class transectionLogDocument extends Document{
     }[]
 }
 
-const transectionLogSchema = new Schema({
+export const transectionLogSchema = new Schema({
     userId: {type:String, required:true} ,
     activityID: {type:String, default:""},
    // time: {type:Long, required:true}
@@ -24,41 +23,12 @@ const transectionLogSchema = new Schema({
     strict: false
 });
 
-export var transectionLogModel = model<transectionLogDocument>('transection_log', transectionLogSchema,'transection_log')
-
-export async function insertLog(userId: string, activityID: string, activityType:number , time: number, totalPrice:number, 
-    bookInfo:{bookId:string ,bookNumber: number, price:number}[], session: ClientSession){
-
-    await transectionLogModel.create(
-        [{
-            userId:userId, 
-            activityID:activityID, 
-            activityType:activityType, 
-            time:time, 
-            totalPrice:totalPrice, 
-            bookInfo: bookInfo
-        }], {
-            session:session
-        }
-    )
-}
-
-export async function countLog(userId:string): Promise<number> {
-    return await transectionLogModel.countDocuments({userId: userId})
-}
-
-export async function getLogData(userId:string, p:pageX, page:number) {
-    let skipNumber = p.getSkip(page)
-    let result = await transectionLogModel.find({userId:userId}).skip(skipNumber).limit(p.pageSize).exec()
-    return result
-}
-
-class IncomeMonthlyDocument extends Document {
+export class IncomeMonthlyDocument extends Document {
     timeStamp: number
     balance: number
 }
 
-const IncomeMonthlySchema = new Schema({
+export const IncomeMonthlySchema = new Schema({
     // timeStamp: Long,
     balance: Number
 },{
@@ -66,16 +36,5 @@ const IncomeMonthlySchema = new Schema({
     strict: false
 });
 
-export var IncomeMonthlyModel = model<IncomeMonthlyDocument>('income_monthly', IncomeMonthlySchema, 'income_monthly')
 
-export async function updateBalance(timeStamp: number, gold:number, session:ClientSession): Promise<boolean>{
-   let monthlyTimeStamp = getCurrentMonthFirstDayTimestamp(timeStamp) 
-   let r = await IncomeMonthlyModel.updateOne(
-        { timeStamp: monthlyTimeStamp},
-        { 
-            $inc:{ balance: gold }
-        }, 
-        {session:session , upsert:true}
-    )
-   return (r.modifiedCount > 0 || r.upsertedCount > 0)
-}
+
