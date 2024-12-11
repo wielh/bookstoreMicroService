@@ -9,19 +9,29 @@ setElasticIndex("gate")
 var app = express();
 app.use(cookieParser.default());
 
+const repeatedLimiter = rateLimit({
+  windowMs: 1000,
+  max: 1,
+  message: 'Send repeated requests, please try again later.',
+  keyGenerator : req => {
+    return `${req.ip}::${req.method}::${req.url}`
+  }
+});
+
 const ipLimiter = rateLimit({
-  windowMs: GlobalConfig.API.intervalms,
-  max: GlobalConfig.API.limitSingalIP,
+  windowMs: GlobalConfig.API.rateLimit.intervalMS,
+  max: GlobalConfig.API.rateLimit.limitSingalIP,
   message: 'Too many requests, please try again later.',
   keyGenerator : req => req.ip
 });
 
 const Limiter = rateLimit({
-  windowMs: GlobalConfig.API.intervalms,
-  max: GlobalConfig.API.limitAll,
-  message: 'Too many requests, please try again later.',
+  windowMs: GlobalConfig.API.rateLimit.intervalMS,
+  max: GlobalConfig.API.rateLimit.limitAll,
+  message: 'Service too busy, please try again later.',
 });
 
+app.use(repeatedLimiter);
 app.use(ipLimiter);
 app.use(Limiter);
 registerRouter(app)

@@ -1,15 +1,11 @@
 import { Schema, Document, model, ClientSession } from 'mongoose';
 import { getCurrentMonthFirstDayTimestamp, pageX} from '../utils.js'
-import mongooseLong from 'mongoose-long';
-import * as mongoose from 'mongoose';
-
-mongooseLong(mongoose)
 
 class transectionLogDocument extends Document{
     userId : string
     activityID : string
     activityType : number
-    time : mongoose.Types.Long
+    time: number
     price : number
     totalPrice: number
     bookInfo : {
@@ -22,7 +18,7 @@ class transectionLogDocument extends Document{
 const transectionLogSchema = new Schema({
     userId: {type:String, required:true} ,
     activityID: {type:String, default:""},
-    time: {type:mongoose.Types.Long, required:true}
+   // time: {type:Long, required:true}
 },{
     versionKey: false, 
     strict: false
@@ -38,7 +34,7 @@ export async function insertLog(userId: string, activityID: string, activityType
             userId:userId, 
             activityID:activityID, 
             activityType:activityType, 
-            time:mongoose.Types.Long.fromNumber(time), 
+            time:time, 
             totalPrice:totalPrice, 
             bookInfo: bookInfo
         }], {
@@ -47,23 +43,23 @@ export async function insertLog(userId: string, activityID: string, activityType
     )
 }
 
-export async function countLog(username:string, accountType:number): Promise<number> {
-    return await transectionLogModel.countDocuments({username:username, accountType:accountType})
+export async function countLog(userId:string): Promise<number> {
+    return await transectionLogModel.countDocuments({userId: userId})
 }
 
-export async function getLogData(username:string, accountType:number, p:pageX, page:number) {
+export async function getLogData(userId:string, p:pageX, page:number) {
     let skipNumber = p.getSkip(page)
-    let result = await transectionLogModel.find({username:username, accountType:accountType}).skip(skipNumber).limit(p.pageSize).exec()
+    let result = await transectionLogModel.find({userId:userId}).skip(skipNumber).limit(p.pageSize).exec()
     return result
 }
 
 class IncomeMonthlyDocument extends Document {
-    timeStamp: mongoose.Types.Long
+    timeStamp: number
     balance: number
 }
 
 const IncomeMonthlySchema = new Schema({
-    timeStamp: Number,
+    // timeStamp: Long,
     balance: Number
 },{
     versionKey: false, 
@@ -72,10 +68,10 @@ const IncomeMonthlySchema = new Schema({
 
 export var IncomeMonthlyModel = model<IncomeMonthlyDocument>('income_monthly', IncomeMonthlySchema, 'income_monthly')
 
-export async function updateBalance(timeStamp: number, gold: number, session:ClientSession): Promise<boolean>{
+export async function updateBalance(timeStamp: number, gold:number, session:ClientSession): Promise<boolean>{
    let monthlyTimeStamp = getCurrentMonthFirstDayTimestamp(timeStamp) 
    let r = await IncomeMonthlyModel.updateOne(
-        { timeStamp: mongoose.Types.Long.fromNumber(monthlyTimeStamp)},
+        { timeStamp: monthlyTimeStamp},
         { 
             $inc:{ balance: gold }
         }, 

@@ -21,10 +21,16 @@ interface Config {
     tokenExpireSecond: number
     emailExpireSecond: number
     env: string
-    rateLimit: number
-      intervalms: number
+    rateLimit:{
+      intervalMS: number
       limitSingalIP: number
       limitAll: number
+    }
+    loginFailed:{
+      attemptTimes : number
+      pastMS: number
+      untilsMS: number
+    }
   }
   googleOauth2: {
     googleVerifyID: string
@@ -148,19 +154,24 @@ async function urlInit() {
   let mongoStr = `mongodb://${gc.mongo.username}:${gc.mongo.password}@${getUrl(gc.mongo.url)}/${gc.mongo.dbName}?replicaSet=${gc.mongo.replicaSet}
     &directConnection=${gc.mongo.directConnection}&serverSelectionTimeoutMS=${gc.mongo.serverSelectionTimeoutMS}&authSource=${gc.mongo.authSource}`
 
-  if(GlobalConfig.API.env != "unitTest") {
+  if(GlobalConfig.API.env !== "unitTest") {
     await mongoose.connect(mongoStr);
   }
 
-  if(GlobalConfig.API.env != "unitTest") {
+  if(GlobalConfig.API.env !== "unitTest") {
     elasticClient = new Client({node: `http://${getUrl(gc.elastic)}`, maxRetries:3});
   }
 
+  let level = "debug"
+  if (GlobalConfig.API.env === "production") {
+    level = "info"
+  }
   log = createLogger({
-      level: 'info',
-      format: format.json(),
-      transports: [new transports.Console()],
+    level: level,
+    format: format.json(),
+    transports: [new transports.Console()],
   });
+
   rabbitMQConenctionStr = `amqp://${gc.rabbitMQ.username}:${gc.rabbitMQ.password}@${getUrl(gc.rabbitMQ.url)}/`;
   accountServiceURL = getUrl(GlobalConfig.microAccount)
   transectionServiceURL = getUrl(GlobalConfig.microTransection)

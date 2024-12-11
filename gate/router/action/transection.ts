@@ -185,7 +185,7 @@ class BookInfo {
 
 class transectionRecordRes {
     errCode:number
-    username:string
+    userId:string
     recordNumber:number
     transectionRecords:{
         bookInfo: BookInfo[]
@@ -203,7 +203,7 @@ class transectionRecordRes {
 
     constructor(res: transectionProto.TransectionRecordResponse) {
         this.errCode = res.errCode
-        this.username = res.username
+        this.userId = res.userId
         this.recordNumber = res.recordNumber
         this.page = res.page
         this.pageSize = res.pageSize

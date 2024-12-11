@@ -2,10 +2,11 @@ import * as grpc from "@grpc/grpc-js";
 import { GooogleLoginRequest, GooogleLoginResponse, LoginRequest, LoginResponse, 
     RegisterRequest, RegisterResponse, ResetPasswordRequest, ResetPasswordResponse, ResendRegisterVerifyEmailRequest,
     ResendRegisterVerifyEmailResponse,RegisterVerifyRequest,RegisterVerifyResponse} from "../proto/account.js";
-import {errSuccess, errMongo, errUserExist, errUserNotExist, errSendRegisterEmailFailed, errEmailVerifited} from '../common/errCode.js'
+import {errSuccess, errMongo, errUserExist, errUserNotExist, errSendRegisterEmailFailed, errEmailVerifited, errUserIsSuspended} from '../common/errCode.js'
 import {createToken, sendMailProducer, errorLogger, getRabbitMQConnection} from '../common/utils.js'
 import {GlobalConfig} from '../common/init.js'
 import * as userDB from '../common/model/user.js'
+import * as LoginRecord from '../common/model/loginRecord.js'
 
 async function resendRegiterVerifyEmailImplementation(username:string, userId:string, email:string): Promise<number> {
     let verificationCode = createToken({userId: userId , email:email}, GlobalConfig.API.emailExpireSecond)
@@ -138,7 +139,7 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
     let res = new LoginResponse()
     let userId = ""
     try {
-        userId = await userDB.normalUserExistWithPWD(call.request.base.username, call.request.base.password)
+        userId = await userDB.normalUserExist(call.request.base.username)
         if (!userId) {
             res.errcode = errUserNotExist
             callback(null, res)
@@ -151,6 +152,35 @@ export async function login(call: grpc.ServerUnaryCall<LoginRequest, LoginRespon
         return
     }
 
+    try {
+        if (!(await userDB.normalUserExistWithPWD(call.request.base.username, call.request.base.password))) {
+            res.errcode = errUserNotExist
+            await LoginRecord.Insert(userId, new Date().getTime(), false)
+            callback(null, res)
+            return
+        }
+    } catch (error) {
+        errorLogger(call.request.base.username, "mongoErr happens while searching user", call.request, error)
+        res.errcode = errMongo
+        callback(error,res)
+        return
+    }
+
+    try {
+        let until = await userDB.userIsSuspensed(userId)
+        if (until > 0) {
+            res.errcode = errUserIsSuspended
+            callback(null, res)
+            return
+        }
+        LoginRecord.Insert(userId, new Date().getTime(), true)
+    } catch(error) {
+        errorLogger(call.request.base.username, "mongoErr happens when we check user is suspended", call.request, error)
+        res.errcode = errMongo
+        callback(error,res)
+        return
+    }
+   
     res.token = createToken({userId:userId}, GlobalConfig.API.tokenExpireSecond)
     res.errcode = errSuccess
     callback(null, res)

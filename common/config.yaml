@@ -4,10 +4,14 @@ API:
   emailExpireSecond: 3600
   env: "Test"
   rateLimit:
-    intervalms: 60000
+    intervalMS: 60000
     limitSingalIP: 100
     limitAll: 100000
-  
+  loginFailed:
+    attemptTimes: 3
+    pastMS: 2592000000   # 1*30*24*60*60*1000
+    untilsMS: 7776000000  # 3*30*24*60*60*1000
+
 googleOauth2:
   googleVerifyID: 118619557524-ej7k7ceopnn8glgi9foksta3t72vnca3.apps.googleusercontent.com
   googlePassword: ${BOOKSTORE_API_GOOGLEOAUTH2_PASSWORD}

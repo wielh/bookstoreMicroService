@@ -205,7 +205,7 @@ export function setElasticIndex(serviceName:string) {
 export function errorLogger(username:string, message:string, data:any, error:Error):void {
     const funcName = getFuncName()
     logger.error(generateMessage(username, funcName , message, data), error)
-    elasticClient.index({index:elasticIndex,body: {
+    elasticClient.index({index:elasticIndex, document: {
         functionName: funcName, 
         message: message,
         level : "error", 
@@ -217,7 +217,7 @@ export function errorLogger(username:string, message:string, data:any, error:Err
 export function warnLogger(username:string, message:string, data:any, error:Error):void {
     const funcName = getFuncName()
     logger.warn(generateMessage(username, funcName , message, data), error)
-    elasticClient.index({index:elasticIndex,body: {
+    elasticClient.index({index:elasticIndex, document: {
         functionName: funcName, 
         message: message,
         level : "warn", 
@@ -229,7 +229,7 @@ export function warnLogger(username:string, message:string, data:any, error:Erro
 export function infoLogger(username:string, message:string, data:any):void {
     const funcName = getFuncName()
     logger.info(generateMessage(username, funcName, message, data))
-    elasticClient.index({index:elasticIndex,body: {
+    elasticClient.index({index:elasticIndex,document: {
         functionName: funcName, 
         message: message,
         level : "Info", 
@@ -241,7 +241,7 @@ export function infoLogger(username:string, message:string, data:any):void {
 export function debugLogger(username:string, message:string, data:any):void {
     const funcName = getFuncName()
     logger.info(generateMessage(username, funcName ,  message, data))
-    elasticClient.index({index:elasticIndex,body: {
+    elasticClient.index({index:elasticIndex,document: {
         functionName: funcName, 
         message: message,
         level : 'debug', 

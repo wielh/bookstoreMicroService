@@ -10,6 +10,7 @@ export const errToken = 7
 export const errUserExist = 10001
 export const errUserNotExist = 10002
 export const errSendRegisterEmailFailed = 10003
+export const errUserIsSuspended = 10004
 
 export const errActivityConfig = 20001
 export const errGoldNotEnought = 20002

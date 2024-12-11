@@ -3,11 +3,18 @@
 import { Schema, Document, model, ClientSession, Types} from 'mongoose';
 import { accountType } from '../init.js'
 import { comparePassword, passwordHash} from '../utils.js'
+import { Long } from "bson";
+
+class Suspensed {
+    reason: string
+    unlockTime: number
+}
 
 class UserDocument extends Document {
-    name : string
-    email : string
-    balance : number
+    name: string
+    email: string
+    balance: number
+    suspensed: Suspensed[]
 }
 
 class NormalUserDocument extends UserDocument {
@@ -36,7 +43,6 @@ const NormalUserSchema = new Schema({
     versionKey: false, 
     strict: false
 });
-
 
 const GoogleUserSchema = new Schema({
     accountType: {type:Number, default: accountType.google},
@@ -70,6 +76,7 @@ export async function normalUserExistWithPWD(username:string, password:string): 
     if (!exist) {
         return ""
     }
+
     return doc._id.toString()
 }
 
@@ -124,10 +131,51 @@ export async function insertGoogleUser(googleID:string, googleName:string, email
 
 export async function userExistByID(Id:string): Promise<boolean> {
     let doc = await UserModel.findById(Id)
-    return !(doc==null)
+    return !(doc === null)
 }
 
 export async function transection(userId:string, gold:number, session: ClientSession): Promise<boolean> {
+    if(!Types.ObjectId.isValid(userId)) {
+        return false
+    }
     let r = await UserModel.updateOne({_id: new Types.ObjectId(userId), balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
     return r.modifiedCount > 0
+}
+
+export async function userSuspense(userId: string, reason: string, unlockTime: number): Promise<boolean> {
+    let doc = await UserModel.findById(userId)
+    if (!doc) {
+        return false
+    }
+
+    let suspensedArray: Suspensed[] = (doc.suspensed && Array.isArray(doc.suspensed)) ? doc.suspensed:[]
+    for(let a of suspensedArray) {
+        if(a.reason && a.reason === reason) {
+            return false
+        }
+    }
+    suspensedArray.push({reason:reason, unlockTime:unlockTime})
+    doc = await UserModel.findByIdAndUpdate(userId, {$set:{suspensed: suspensedArray}})
+    return true
+}
+
+export async function userIsSuspensed(userId: string): Promise<number> {
+    let doc = await UserModel.findById(userId)
+    console.log(doc)
+    if (!doc) {
+        return -1
+    }
+
+    if (!(doc.suspensed) || !Array.isArray(doc.suspensed)) {
+        return -1
+    }
+
+    let suspensedTime = -1
+    for(let a of doc.suspensed) {
+        if(a.unlockTime > suspensedTime) { 
+            suspensedTime = a.unlockTime   
+        }
+    }
+    console.log(suspensedTime)
+    return suspensedTime
 }

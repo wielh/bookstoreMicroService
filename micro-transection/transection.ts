@@ -107,7 +107,7 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
     let data = [req.userId, req.page, req.pageSize]
     let count = 0 
     try {
-        count = await transectionDB.countLog(req.userId ,req.accountType)
+        count = await transectionDB.countLog(req.userId)
     } catch (error) {
         errorLogger(req.userId, "mongoErr happens while counting transection log", data, error)
         res.errCode = errMongo
@@ -118,10 +118,10 @@ export async function transectionRecord(call: ServerUnaryCall<TransectionRecordR
     let record: TransectionRecord
     let p = new pageX(req.pageSize, count)
     try {
-        let logs = await transectionDB.getLogData(req.userId, req.accountType, p, req.page)
+        let logs = await transectionDB.getLogData(req.userId, p, req.page)
         for (let log of logs) {
             record = new TransectionRecord()
-            record.transectionTime = log.time.toNumber()
+            record.transectionTime = log.time
             record.appliedActivityData = new ActivityReponseData()      
             try {
                 let a = await activityDB.findActivityById(log.activityID, log.activityType)
