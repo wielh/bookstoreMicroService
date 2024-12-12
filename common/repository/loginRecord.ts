@@ -1,8 +1,7 @@
 
-import { loginRecordDocument, loginRecordSchema } from "../model/loginRecord.js"
+import { loginRecordDocument, loginRecordModel } from "../model/loginRecord.js"
 import { UserRepo } from "./user.js"
 import { GlobalConfig } from "../init.js"
-import { model, Model } from 'mongoose';
 
 export interface loginRecordRepo {
     Insert(userID:string, loginTime:number, status:boolean): Promise<loginRecordDocument>
@@ -15,16 +14,13 @@ export function newLoginRecordRepo(userRepo: UserRepo): loginRecordRepo {
 
 class loginRecordRepoImpl implements loginRecordRepo {
 
-    loginRecordModel: Model<loginRecordDocument>
     userRepo: UserRepo
-
     constructor(userRepo: UserRepo) {
-        this.loginRecordModel = model<loginRecordDocument>('loginRecord', loginRecordSchema,'loginRecord')
         this.userRepo = userRepo
     }
 
     async Insert(userID:string, loginTime:number, status:boolean): Promise<loginRecordDocument> {
-        let result = await this.loginRecordModel.create({userID:userID, loginTime:loginTime, status:status})
+        let result = await loginRecordModel.create({userID:userID, loginTime:loginTime, status:status})
         if(status) {
             return result
         }
@@ -38,7 +34,7 @@ class loginRecordRepoImpl implements loginRecordRepo {
 
     async CheckSucciveFailed(userID:string, loginTime:number): Promise<boolean> {
         let aMonthAgo = loginTime - GlobalConfig.API.loginFailed.pastMS
-        let results = await this.loginRecordModel.find({userID:userID, loginTime:{$gte: aMonthAgo, $lte: loginTime}}).sort({loginTime:-1}).limit(3)
+        let results = await loginRecordModel.find({userID:userID, loginTime:{$gte: aMonthAgo, $lte: loginTime}}).sort({loginTime:-1}).limit(3)
         if(results.length < GlobalConfig.API.loginFailed.attemptTimes){
             return false
         }

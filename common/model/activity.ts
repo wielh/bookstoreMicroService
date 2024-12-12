@@ -1,4 +1,11 @@
-import { Schema, Document } from 'mongoose';
+import { Schema, Document, model } from 'mongoose';
+
+export const activitySchema = new Schema({
+    type: {type:Number, default:0},
+},{
+    versionKey: false, 
+    strict: false
+});
 
 export class ActivityDocument extends Document {
     type: number
@@ -25,14 +32,11 @@ class LevelType3 {
     bookIds: string[]
 }
 
-export const activitySchema = new Schema({
-    type: {type:Number, default:0},
-},{
-    versionKey: false, 
-    strict: false
-});
-
-
-
-
-
+export const activityModel = model<ActivityDocument>('activity', activitySchema, 'activity')
+export function newActivityDocument(type:number, startDate:number, endDate:number): ActivityDocument {
+    return new activityModel({
+        type:type, 
+        startDate: startDate, 
+        endDate:endDate
+    })
+}

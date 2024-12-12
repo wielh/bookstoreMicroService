@@ -50,6 +50,8 @@ export const googleUserSchema = new Schema({
     strict: false
 });
 
-
+export const userModel = model<UserDocument>('user', userSchema, "user")
+export const normalUserModel = model<NormalUserDocument>('NormalUser', normalUserSchema, "user")
+export const GoolgeUserModel = model<GoogleUserDocument>('GoolgeUser', googleUserSchema, "user")
 
 

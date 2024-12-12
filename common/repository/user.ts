@@ -1,7 +1,7 @@
-import { model, ClientSession, Types, Model} from 'mongoose';
+import { ClientSession, Types } from 'mongoose';
 import { accountType } from '../init.js'
 import { comparePassword, passwordHash} from '../utils.js'
-import { UserDocument, userSchema, Suspensed, NormalUserDocument, normalUserSchema, GoogleUserDocument, googleUserSchema } from '../model/user.js'
+import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../model/user.js'
 
 export interface UserRepo {
     userExistByID(Id:string): Promise<boolean>
@@ -16,13 +16,11 @@ export function newUserRepo(): UserRepo {
 
 class UserRepoImpl implements UserRepo {
     
-    userModel: Model<UserDocument>
     constructor() {
-        this.userModel = model<UserDocument>('user', userSchema, "user")
     }
 
     async userExistByID(Id:string): Promise<boolean> {
-        let doc = await this.userModel.findById(Id)
+        let doc = await userModel.findById(Id)
         return !(doc === null)
     }
     
@@ -30,12 +28,12 @@ class UserRepoImpl implements UserRepo {
         if(!Types.ObjectId.isValid(userId)) {
             return false
         }
-        let r = await this.userModel.updateOne({_id: new Types.ObjectId(userId), balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
+        let r = await userModel.updateOne({_id: new Types.ObjectId(userId), balance:{$gte:gold}}, {$inc: { balance: -1*gold }}, {session:session})
         return r.modifiedCount > 0
     }
     
     async userSuspense(userId: string, reason: string, unlockTime: number): Promise<boolean> {
-        let doc = await this.userModel.findById(userId)
+        let doc = await userModel.findById(userId)
         if (!doc) {
             return false
         }
@@ -47,12 +45,12 @@ class UserRepoImpl implements UserRepo {
             }
         }
         suspensedArray.push({reason:reason, unlockTime:unlockTime})
-        doc = await this.userModel.findByIdAndUpdate(userId, {$set:{suspensed: suspensedArray}})
+        doc = await userModel.findByIdAndUpdate(userId, {$set:{suspensed: suspensedArray}})
         return true
     }
     
     async userIsSuspensed(userId: string): Promise<number> {
-        let doc = await this.userModel.findById(userId)
+        let doc = await userModel.findById(userId)
         if (!doc) {
             return -1
         }
@@ -87,13 +85,11 @@ export function newNormalUserRepo(): normalUserRepo {
 
 class normalUserRepoImpl implements normalUserRepo {
 
-    normalUserModel: Model<NormalUserDocument>
     constructor() {
-        this.normalUserModel = model<NormalUserDocument>('NormalUser', normalUserSchema, "user")
     }
 
     async normalUserExist(username:string): Promise<string> {
-        let doc = await this.normalUserModel.findOne({username:username, accountType:accountType.normal})
+        let doc = await normalUserModel.findOne({username:username, accountType:accountType.normal})
         if (!doc || !doc._id) {
             return ""
         }
@@ -101,7 +97,7 @@ class normalUserRepoImpl implements normalUserRepo {
     }
     
     async normalUserExistWithPWD(username:string, password:string): Promise<string> {
-        let doc = await this.normalUserModel.findOne({username:username, accountType:accountType.normal})
+        let doc = await normalUserModel.findOne({username:username, accountType:accountType.normal})
         if( !doc ) {
             return ""
         }
@@ -115,7 +111,7 @@ class normalUserRepoImpl implements normalUserRepo {
     }
     
     async insertNormalUser(username:string, password:string, email:string, name:string): Promise<string> {
-        return await this.normalUserModel.create({
+        return await normalUserModel.create({
             username:username, password: 
             await passwordHash(password), 
             email: email, name:name, 
@@ -134,17 +130,17 @@ class normalUserRepoImpl implements normalUserRepo {
         }
     
         const newHashedPassword = await passwordHash(newPassword)
-        const r = await this.normalUserModel.updateOne({username:username}, {$set:{password: newHashedPassword}})
+        const r = await normalUserModel.updateOne({username:username}, {$set:{password: newHashedPassword}})
         return r.modifiedCount>0
     }
     
     async normalEmailCheckAndChange(username:string, email:string): Promise<boolean> {
-        let doc = await this.normalUserModel.findOneAndUpdate({username:username, accountType:accountType.normal, emailVerified: 0},{$set:{email:email}})
+        let doc = await normalUserModel.findOneAndUpdate({username:username, accountType:accountType.normal, emailVerified: 0},{$set:{email:email}})
         return !(doc==null)
     }
     
     async normalEmailVerify(userId: string): Promise<boolean> {
-        let doc = await this.normalUserModel.findOneAndUpdate({id: new Types.ObjectId(userId), emailVerified: 0},{$set:{emailVerified:1}})
+        let doc = await normalUserModel.findOneAndUpdate({id: new Types.ObjectId(userId), emailVerified: 0},{$set:{emailVerified:1}})
         return !(doc==null)
     }
     
@@ -161,13 +157,10 @@ export interface googleUserRepo {
 
 class googleUserRepoImpl implements googleUserRepo {
 
-    GoolgeUserModel: Model<GoogleUserDocument>
-    constructor() {
-        this.GoolgeUserModel = model<GoogleUserDocument>('GoolgeUser', googleUserSchema, "user")
-    }
+    constructor() {}
 
     async googleUserExist(googleID:string): Promise<string> {
-        let doc = await this.GoolgeUserModel.findOne({googleID:googleID, accountType:accountType.google})
+        let doc = await GoolgeUserModel.findOne({googleID:googleID, accountType:accountType.google})
         if (!doc) {
             return ""
         }
@@ -175,7 +168,7 @@ class googleUserRepoImpl implements googleUserRepo {
     }
     
     async insertGoogleUser(googleID:string, googleName:string, email:string): Promise<string> {
-        return await this.GoolgeUserModel.create({
+        return await GoolgeUserModel.create({
             googleID: googleID, name:googleName , email:email,  accountType:accountType.google, balance:0, emailVerified:1}).
                 then((doc) => doc._id.toString())
     }

@@ -1,12 +1,12 @@
-import { ActivityDocument, activitySchema } from "../model/activity.js"
+import { ActivityDocument, activitySchema, activityModel } from "../model/activity.js"
 import { Types, model, Model } from 'mongoose';
 
 export interface ActivityRepo {
     findActivities(timeStamp:number): Promise<ActivityDocument[]>
-    findActivityType1ById(Id: string, timeStamp:number):Promise<ActivityDocument>
-    findActivityType2ById(Id: string, timeStamp:number):Promise<ActivityDocument>
-    findActivityType3ById(Id: string, timeStamp:number):Promise<ActivityDocument>
-    findActivityById(id:string, activityType:number):Promise<ActivityDocument>
+    findActivityType1ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>
+    findActivityType2ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>
+    findActivityType3ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>
+    findActivityById(id:string, timeStamp:number):Promise<ActivityDocument|null>
 }
 
 export function newActivityRepo():ActivityRepo {
@@ -15,13 +15,10 @@ export function newActivityRepo():ActivityRepo {
 
 class ActivityRepoImpl implements ActivityRepo {
 
-    activityModel : Model<ActivityDocument>
-    constructor() {
-        this.activityModel = model<ActivityDocument>('activity', activitySchema, 'activity')
-    }
+    constructor() {}
 
     async findActivities(timeStamp:number):Promise<ActivityDocument[]> {
-        const result = await this.activityModel.find(
+        const result = await activityModel.find(
             {
                 startDate:{$lt:timeStamp}, 
                 endDate:{$gt:timeStamp}
@@ -30,20 +27,20 @@ class ActivityRepoImpl implements ActivityRepo {
         return result
     }
     
-    async findActivityType1ById(Id: string, timeStamp:number):Promise<ActivityDocument>{
-        const result = await this.activityModel.findOne({ _id: new Types.ObjectId(Id), type:1, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
+    async findActivityType1ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>{
+        const result = await activityModel.findOne({ _id: new Types.ObjectId(Id), type:1, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
         return result
     }
     
-    async findActivityType2ById(Id: string, timeStamp:number):Promise<ActivityDocument>{
-        return await this.activityModel.findOne({ _id: new Types.ObjectId(Id), type:2, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
+    async findActivityType2ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>{
+        return await activityModel.findOne({ _id: new Types.ObjectId(Id), type:2, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
     }
     
-    async findActivityType3ById(Id: string, timeStamp:number):Promise<ActivityDocument>{
-        return await this.activityModel.findOne({ _id: new Types.ObjectId(Id), type:3, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
+    async findActivityType3ById(Id: string, timeStamp:number):Promise<ActivityDocument|null>{
+        return await activityModel.findOne({ _id: new Types.ObjectId(Id), type:3, startDate:{$lt: timeStamp}, endDate:{$gt: timeStamp}})
     }
     
-    async findActivityById(id:string, activityType:number):Promise<ActivityDocument> {
-        return await this.activityModel.findOne({ _id: new Types.ObjectId(id), type:activityType})
+    async findActivityById(id:string, activityType:number):Promise<ActivityDocument|null> {
+        return await activityModel.findOne({ _id: new Types.ObjectId(id), type:activityType})
     }
 }

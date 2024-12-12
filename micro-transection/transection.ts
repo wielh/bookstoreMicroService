@@ -5,7 +5,7 @@ import mongoose from 'mongoose'
 import {TransectionRequest, TransectionResponse, TransectionRecordRequest, TransectionRecordResponse, TransectionRecord, ActivityReponseData, BookInfo} from '../proto/transection.js'
 import { errMongo, errSuccess, errUserNotExist, errGoldNotEnought, errUpdateIncomeFailed, errBookNotEnought} from '../common/errCode.js'
 import { pageX, errorLogger, warnLogger, infoLogger} from '../common/utils.js'
-import { calculatePrice, TransectionResult} from './priceCalculate.js'
+import { priceCalculator, TransectionResult } from './priceCalculate.js'
 import { userRepo, bookRepo, transectionLogRepo, balanceRepo, activityRepo } from "../common/repository/init.js"
 
 export async function transection(call: ServerUnaryCall<TransectionRequest,TransectionResponse>, callback: sendUnaryData<TransectionResponse>) {
@@ -29,10 +29,9 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
         return
     }
     
-    // 1. 算錢
     let answer: TransectionResult
     try {
-        answer = await calculatePrice(req)
+        answer = await priceCalculator.calculatePrice(req)
         if (answer == null) {
             warnLogger(req.userId, "Format of request is incorrect", data, null)
             callback(null,res)
@@ -49,7 +48,6 @@ export async function transection(call: ServerUnaryCall<TransectionRequest,Trans
         return
     }
 
-    // 2. writeDB
     const session = await mongoose.startSession();
     let success = false
     try { 

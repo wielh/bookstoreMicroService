@@ -1,4 +1,4 @@
-import { Schema, Document} from 'mongoose';
+import { Schema, Document, model} from 'mongoose';
 
 export class loginRecordDocument extends Document {
     userID: string
@@ -13,3 +13,4 @@ export const loginRecordSchema = new Schema({
     strict: false
 });
 
+export const loginRecordModel = model<loginRecordDocument>('loginRecord', loginRecordSchema,'loginRecord')
