@@ -18,7 +18,7 @@ googleOauth2:
   
 elastic:
   localIP: "127.0.0.1"
-  dockerIP: elastic-container
+  dockerIP: host.docker.internal
   dockerComposeIP : elastic-service
   port: 9200
 
@@ -27,7 +27,7 @@ rabbitMQ:
   password: !env ${BOOKSTORE_RABBITMQ_PASSWORD}
   url:
     localIP: "127.0.0.1"
-    dockerIP: rabbitMQ-container-0
+    dockerIP: host.docker.internal
     dockerComposeIP: rabbitMQ-service-0
     port: 5672
   channelName:
@@ -38,7 +38,7 @@ mongo:
   password: !env ${BOOKSTORE_MONGO_PASSWORD}
   url:
     localIP: "127.0.0.1"
-    dockerIP: host.docker.abc
+    dockerIP: host.docker.internal
     dockerComposeIP : host.docker.abc
     port: 27017
   dbName: bookstore

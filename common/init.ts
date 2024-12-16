@@ -126,19 +126,19 @@ function getIPMode() {
   try {
     let type = parseInt(args[2])
     switch(type) {
-        case 1:
-            mode = 1
-            break
-        case 2:
-            mode = 2
-            break
-        default:
-            mode = 0 
-            break
+      case 1:
+        mode = 1
+        break
+      case 2:
+        mode = 2
+        break
+      default:
+        mode = 0 
+        break
     }
   } catch (error) {
-      mode = 0 
-      return
+    mode = 0 
+    return
   }
 }
 
@@ -164,8 +164,7 @@ async function urlInit() {
     include_granted_scopes: true
   });
 
-  let mongoStr = `mongodb://${gc.mongo.username}:${gc.mongo.password}@${getUrl(gc.mongo.url)}/${gc.mongo.dbName}?replicaSet=${gc.mongo.replicaSet}
-    &directConnection=${gc.mongo.directConnection}&serverSelectionTimeoutMS=${gc.mongo.serverSelectionTimeoutMS}&authSource=${gc.mongo.authSource}`
+  let mongoStr = `mongodb://${gc.mongo.username}:${gc.mongo.password}@${getUrl(gc.mongo.url)}/${gc.mongo.dbName}?replicaSet=${gc.mongo.replicaSet}&directConnection=${gc.mongo.directConnection}&serverSelectionTimeoutMS=${gc.mongo.serverSelectionTimeoutMS}&authSource=${gc.mongo.authSource}`
 
   if(GlobalConfig.API.env !== "unitTest") {
     await mongoose.connect(mongoStr);
@@ -202,3 +201,4 @@ async function start() {
 }
 
 await start()
+
