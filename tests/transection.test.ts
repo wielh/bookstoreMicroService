@@ -7,7 +7,7 @@ import { ActivityDocument, newActivityDocument } from '../common/model/activity.
 import { BookRepo } from "../common/repository/book.js"
 import { BookDocument, newBookDocument } from '../common/model/book.js';
 import { ClientSession } from 'mongoose';
-import { newPriceCalculator, TransectionResult } from '../micro-transection/priceCalculate.js'
+import { newPriceCalculator } from '../micro-transection/priceCalculate.js'
 
 class ActivityRepoMock implements ActivityRepo {
 

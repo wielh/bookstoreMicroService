@@ -96,16 +96,29 @@ function loadConfig() {
     const currentDir = path.dirname(currentFile);
     const fullPath = path.join(currentDir, "config.yaml")
     const fileContent = fs.readFileSync(fullPath, 'utf8');
-    GlobalConfig = parse(fileContent) as Config;
+    GlobalConfig = parse(
+      fileContent, 
+      {
+        customTags:[
+          {
+            tag:"!env",
+            resolve:(doc:string, _tagName:any, _context:any) => {
+              const pattern = /\${(.*?)}/g;
+              return doc.replace(pattern, (d, envKey) => {
+                const envValue = process.env[envKey.trim()];
+                if (envValue === undefined) {
+                  return '';
+                }
+                return envValue;
+              });
+            }
+          }
+        ]
+      }
+    ) as Config;
   } catch (error) {
     throw new Error(`Failed to load YAML file: ${error.message}`);
   }
-
-  GlobalConfig.API.tokenKey = process.env.BOOKSTORE_TOKEN_KEY;
-  GlobalConfig.googleOauth2.googlePassword = process.env.BOOKSTORE_API_GOOGLEOAUTH2_PASSWORD
-  GlobalConfig.rabbitMQ.password = process.env.BOOKSTORE_RABBITMQ_PASSWORD
-  GlobalConfig.mongo.password = process.env.BOOKSTORE_MONGO_PASSWORD
-  GlobalConfig.microMail.sendMailPassword = process.env.BOOKSTORE_SENDMAIL_PASSWORD
 }
 
 function getIPMode() {

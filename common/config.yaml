@@ -1,5 +1,5 @@
 API: 
-  tokenKey: ${BOOKSTORE_TOKEN_KEY}
+  tokenKey: !env ${BOOKSTORE_TOKEN_KEY}
   tokenExpireSecond: 86400
   emailExpireSecond: 3600
   env: "Test"
@@ -14,7 +14,7 @@ API:
 
 googleOauth2:
   googleVerifyID: 118619557524-ej7k7ceopnn8glgi9foksta3t72vnca3.apps.googleusercontent.com
-  googlePassword: ${BOOKSTORE_API_GOOGLEOAUTH2_PASSWORD}
+  googlePassword: !env ${BOOKSTORE_API_GOOGLEOAUTH2_PASSWORD}
   
 elastic:
   localIP: "127.0.0.1"
@@ -24,7 +24,7 @@ elastic:
 
 rabbitMQ:
   username: root
-  password: ${BOOKSTORE_RABBITMQ_PASSWORD}
+  password: !env ${BOOKSTORE_RABBITMQ_PASSWORD}
   url:
     localIP: "127.0.0.1"
     dockerIP: rabbitMQ-container-0
@@ -35,7 +35,7 @@ rabbitMQ:
 
 mongo:
   username: bookstore_user
-  password: ${BOOKSTORE_MONGO_PASSWORD}
+  password: !env ${BOOKSTORE_MONGO_PASSWORD}
   url:
     localIP: "127.0.0.1"
     dockerIP: host.docker.abc
@@ -77,7 +77,7 @@ microMail:
     port: 9504
   sendMailport: 465
   websiteEmail: wielh.erlow@gmail.com
-  sendMailPassword: ${BOOKSTORE_SENDMAIL_PASSWORD}
+  sendMailPassword: !env ${BOOKSTORE_SENDMAIL_PASSWORD}
 
 
 
