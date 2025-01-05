@@ -1,5 +1,5 @@
-import { ActivityDocument, activitySchema, activityModel } from "../model/activity.js"
-import { Types, model, Model } from 'mongoose';
+import { ActivityDocument, activityModel } from "../model/activity.js"
+import { Types} from 'mongoose';
 
 export interface ActivityRepo {
     findActivities(timeStamp:number): Promise<ActivityDocument[]>

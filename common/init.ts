@@ -104,7 +104,7 @@ function loadConfig() {
             tag:"!env",
             resolve:(doc:string, _tagName:any, _context:any) => {
               const pattern = /\${(.*?)}/g;
-              return doc.replace(pattern, (d, envKey) => {
+              return doc.replace(pattern, (_d, envKey) => {
                 const envValue = process.env[envKey.trim()];
                 if (envValue === undefined) {
                   return '';
