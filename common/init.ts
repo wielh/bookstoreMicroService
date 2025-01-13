@@ -191,6 +191,7 @@ async function urlInit() {
 }
 
 async function start() {
+  console.log("Start init")
   const start = Date.now();
   loadConfig()
   getIPMode()

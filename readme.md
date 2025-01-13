@@ -88,3 +88,5 @@ sudo docker create -it --name micro-mail-container --network bookstore_network -
 ## TODO
 
 + 尚未驗證 docker-compose.yaml 是否可執行
+
++ AOP 改進

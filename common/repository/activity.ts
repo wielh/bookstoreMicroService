@@ -1,5 +1,5 @@
 import { ActivityDocument, activityModel } from "../model/activity.js"
-import { Types} from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface ActivityRepo {
     findActivities(timeStamp:number): Promise<ActivityDocument[]>
@@ -10,10 +10,10 @@ export interface ActivityRepo {
 }
 
 export function newActivityRepo():ActivityRepo {
-    return new ActivityRepoImpl()
+    return new ActivityRepoMongoImpl()
 }
 
-class ActivityRepoImpl implements ActivityRepo {
+class ActivityRepoMongoImpl implements ActivityRepo {
 
     constructor() {}
 
@@ -44,3 +44,4 @@ class ActivityRepoImpl implements ActivityRepo {
         return await activityModel.findOne({ _id: new Types.ObjectId(id), type:activityType})
     }
 }
+

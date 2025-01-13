@@ -157,7 +157,6 @@ async function googleCallback(req:Request, res:Response) {
 }
 
 async function login(req:Request, res:Response):Promise<void> {
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
        res.status(400).json({ errorCode:errParameter, errors: errors.array()});
