@@ -18,7 +18,7 @@ export async function activityList(call: grpc.ServerUnaryCall<ActivityRequest,Ac
         for (let activity of activitys) {
 
             let activityRes = new ActivityReponseData()
-            activityRes.activityID = activity._id.toString()
+            activityRes.activityID = activity.id
             activityRes.activityType = activity.type
             activityRes.startDate = Number(activity.startDate.toString())
             activityRes.endDate = Number(activity.endDate.toString())

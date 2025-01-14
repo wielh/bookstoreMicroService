@@ -3,33 +3,45 @@ import { describe, it } from 'mocha'
 
 import { TransectionRequest, BookInfo } from '../proto/transection.js'
 import { ActivityRepo } from "../common/repository/activity.js"
-import { ActivityDocument, newActivityDocument } from '../common/model/activity.js';
+import { Activity } from '../common/entity/activity.js';
 import { BookRepo } from "../common/repository/book.js"
-import { BookDocument, newBookDocument } from '../common/model/book.js';
+import { Book } from '../common/entity/book.js';
 import { ClientSession } from 'mongoose';
 import { newPriceCalculator } from '../micro-transection/priceCalculate.js'
 
 class ActivityRepoMock implements ActivityRepo {
 
-    activityMap = new Map<string,ActivityDocument>()
+    activityMap = new Map<string,Activity>()
     constructor () {
         let now = new Date().getTime()
     
-        let activity1 = newActivityDocument(1, now - 60*60*1000, now + 60*60*1000)
-        activity1.levelType1 = [{price:100, discount:0.9}, {price:500, discount:0.8}, {price:1000, discount:0.6}]
+        let activity1 = {
+            id:"a1", type:1, startDate:now - 60*60*1000, endDate:now + 60*60*1000, 
+            levelType1: [{price:100, discount:0.9}, {price:500, discount:0.8}, {price:1000, discount:0.6}],
+            levelType2: null,
+            levelType3: null,
+        }
         this.activityMap.set("a1", activity1)
 
-        let activity2 = newActivityDocument(2, now - 60*60*1000, now + 60*60*1000)
-        activity2.levelType2 = [{price:100, discount:10}, {price:500, discount:100}, {price:1000, discount:400}]
+        let activity2 = {
+            id:"a2", type:2, startDate:now - 60*60*1000, endDate:now + 60*60*1000, 
+            levelType1: null,
+            levelType2: [{price:100, discount:10}, {price:500, discount:100}, {price:1000, discount:400}],
+            levelType3: null,
+        }
         this.activityMap.set("a2", activity2)
 
-        let activity3 = newActivityDocument(3, now - 60*60*1000, now + 60*60*1000)
-        activity3.levelType3 = [{by:5, give:2, bookIds:["1", "2"]}]
+        let activity3 = {
+            id:"a3", type:3, startDate:now - 60*60*1000, endDate:now + 60*60*1000, 
+            levelType1: null,
+            levelType2: null,
+            levelType3: [{by:5, give:2, bookIds:["1", "2"]}],
+        }
         this.activityMap.set("a3", activity3)
     }
 
-    findActivities(timeStamp: number): Promise<ActivityDocument[]> {
-        let answer:ActivityDocument[] = []
+    findActivities(timeStamp: number): Promise<Activity[]> {
+        let answer:Activity[] = []
         for(let v of this.activityMap) {
             if (v[1].startDate <= timeStamp && v[1].endDate >= timeStamp) {
                 answer.push(v[1])
@@ -38,7 +50,7 @@ class ActivityRepoMock implements ActivityRepo {
         return Promise.resolve(answer);
     }
     
-    findActivityType1ById(Id: string, timeStamp: number): Promise<ActivityDocument|null> {
+    findActivityType1ById(Id: string, timeStamp: number): Promise<Activity|null> {
         let doc = this.activityMap.get(Id)
         if (doc && doc.type === 1 && doc.startDate <= timeStamp && doc.endDate >= timeStamp) {
             return Promise.resolve(doc)
@@ -46,7 +58,7 @@ class ActivityRepoMock implements ActivityRepo {
         return Promise.resolve(null)
     }
 
-    findActivityType2ById(Id: string, timeStamp: number): Promise<ActivityDocument|null> {
+    findActivityType2ById(Id: string, timeStamp: number): Promise<Activity|null> {
         let doc = this.activityMap.get(Id)
         if (doc && doc.type === 2 && doc.startDate <= timeStamp && doc.endDate >= timeStamp) {
             return Promise.resolve(doc)
@@ -54,7 +66,7 @@ class ActivityRepoMock implements ActivityRepo {
         return Promise.resolve(null)
     }
 
-    findActivityType3ById(Id: string, timeStamp: number): Promise<ActivityDocument|null> {
+    findActivityType3ById(Id: string, timeStamp: number): Promise<Activity|null> {
         let doc = this.activityMap.get(Id)
         if (doc && doc.type === 3 && doc.startDate <= timeStamp && doc.endDate >= timeStamp) {
             return Promise.resolve(doc)
@@ -62,7 +74,7 @@ class ActivityRepoMock implements ActivityRepo {
         return Promise.resolve(null)
     }
 
-    findActivityById(Id: string, timeStamp: number): Promise<ActivityDocument|null> {
+    findActivityById(Id: string, timeStamp: number): Promise<Activity|null> {
         let doc = this.activityMap.get(Id)
         if (doc && doc.startDate <= timeStamp && doc.endDate >= timeStamp) {
             return Promise.resolve(doc)
@@ -72,20 +84,20 @@ class ActivityRepoMock implements ActivityRepo {
 }
 
 class bookRepoMock implements BookRepo {
-    bookMap = new Map<string,BookDocument>()
+    bookMap = new Map<string,Book>()
     constructor () {
-        this.bookMap.set("1", newBookDocument("java", 100, ["program"]))
-        this.bookMap.set("2", newBookDocument("python", 123, ["program"]))
-        this.bookMap.set("3", newBookDocument("calculus", 200, ["math"]))
-        this.bookMap.set("4", newBookDocument("harry potter", 320, ["english"]))
+        this.bookMap.set("1", {id:"1", bookName:"java", price:100, remainNumber:10000, tags:["program"]})
+        this.bookMap.set("2", {id:"2", bookName:"python", price:123, remainNumber:10000, tags:["program"]})
+        this.bookMap.set("3", {id:"3", bookName:"calculus", price:200, remainNumber:10000, tags:["math"]})
+        this.bookMap.set("4", {id:"4", bookName:"harry potter", price:320, remainNumber:10000, tags:["english"]})
     }
     count(_bookName: string, _tags: string[], _priceLowerbound: number, _priceUpperbound: number): Promise<number> {
         throw new Error('Method not implemented.');
     }
-    getbookData(_bookName: string, _tags: string[], _priceLowerbound: number, _priceUpperbound: number, _pageSize: number, _page: number, _bookCount: number): Promise<BookDocument[]> {
+    getbookData(_bookName: string, _tags: string[], _priceLowerbound: number, _priceUpperbound: number, _pageSize: number, _page: number, _bookCount: number): Promise<Book[]> {
         throw new Error('Method not implemented.');
     }
-    getBookById(bookId: string): Promise<BookDocument|null> {
+    getBookById(bookId: string): Promise<Book|null> {
         let book = this.bookMap.get(bookId)??null
         return Promise.resolve(book)
     }

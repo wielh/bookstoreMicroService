@@ -17,9 +17,6 @@ export const bookSchema = new Schema({
 
 export const bookModel = model<BookDocument>('book', bookSchema, 'book')
 
-export function newBookDocument(name:string, price:number, tags:string[]): BookDocument {
-    return new bookModel({bookName:name, price: price, tags: tags})
-}
 
 
 

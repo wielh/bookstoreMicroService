@@ -29,7 +29,7 @@ async function bookList(call: grpc.ServerUnaryCall<BookListRequest, BookListResp
                 continue
             }
             book = new Book()
-            book.ID = bookData._id.toString()
+            book.ID = bookData.id
             book.name = bookData.bookName
             book.price =  bookData.price
             book.remainNumber = bookData.remainNumber

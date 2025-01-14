@@ -33,10 +33,4 @@ class LevelType3 {
 }
 
 export const activityModel = model<ActivityDocument>('activity', activitySchema, 'activity')
-export function newActivityDocument(type:number, startDate:number, endDate:number): ActivityDocument {
-    return new activityModel({
-        type:type, 
-        startDate: startDate, 
-        endDate:endDate
-    })
-}
+
