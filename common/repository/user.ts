@@ -1,7 +1,7 @@
 import { ClientSession, Types } from 'mongoose';
 import { accountType } from '../init.js'
 import { comparePassword, passwordHash} from '../utils.js'
-import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../model/user.js'
+import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../mongoModel/user.js'
 
 export interface UserRepo {
     userExistByID(Id:string): Promise<boolean>
@@ -11,10 +11,10 @@ export interface UserRepo {
 }
 
 export function newUserRepo(): UserRepo {
-    return new UserRepoImpl()
+    return new UserRepoMongoImpl()
 }
 
-class UserRepoImpl implements UserRepo {
+class UserRepoMongoImpl implements UserRepo {
     
     constructor() {
     }
@@ -80,10 +80,10 @@ export interface normalUserRepo {
 }
 
 export function newNormalUserRepo(): normalUserRepo {
-    return new normalUserRepoImpl()
+    return new normalUserRepoMongoImpl()
 }
 
-class normalUserRepoImpl implements normalUserRepo {
+class normalUserRepoMongoImpl implements normalUserRepo {
 
     constructor() {
     }
@@ -147,7 +147,7 @@ class normalUserRepoImpl implements normalUserRepo {
 }
 
 export function newGoogleUserRepo(): googleUserRepo {
-    return new googleUserRepoImpl()
+    return new googleUserRepoMongoImpl()
 }
 
 export interface googleUserRepo {
@@ -155,7 +155,7 @@ export interface googleUserRepo {
     insertGoogleUser(googleID:string, googleName:string, email:string): Promise<string>
 }
 
-class googleUserRepoImpl implements googleUserRepo {
+class googleUserRepoMongoImpl implements googleUserRepo {
 
     constructor() {}
 

@@ -1,19 +1,20 @@
 import { ClientSession } from 'mongoose';
 import { getCurrentMonthFirstDayTimestamp, pageX} from '../utils.js'
-import { transectionLogDocument, transectionLogModel, IncomeMonthlyModel } from '../model/transection.js'
+import { transectionLogModel, IncomeMonthlyModel } from '../mongoModel/transection.js'
+import { transectionLog } from '../entity/transection.js'
 
 export interface transectionLogRepo {
     countLog(userId:string): Promise<number> 
-    getLogData(userId:string, p:pageX, page:number): Promise<transectionLogDocument[]>
+    getLogData(userId:string, p:pageX, page:number): Promise<transectionLog[]>
     insertLog(userId: string, activityID: string, activityType:number , time: number, totalPrice:number, 
         bookInfo:{bookId:string ,bookNumber: number, price:number}[], session: ClientSession): Promise<void>
 }
 
 export function newTransectionLogRepo(): transectionLogRepo {
-    return new transectionLogRepoImpl()
+    return new transectionLogRepoMongoImpl()
 }
 
-class transectionLogRepoImpl implements transectionLogRepo {
+class transectionLogRepoMongoImpl implements transectionLogRepo {
     
     constructor() {}
 
@@ -38,9 +39,10 @@ class transectionLogRepoImpl implements transectionLogRepo {
         return await transectionLogModel.countDocuments({userId: userId})
     }
     
-    async getLogData(userId:string, p:pageX, page:number): Promise<transectionLogDocument[]> {
+    async getLogData(userId:string, p:pageX, page:number): Promise<transectionLog[]> {
         let skipNumber = p.getSkip(page)
-        return await transectionLogModel.find({userId:userId}).skip(skipNumber).limit(p.pageSize).exec()
+        const docs = await transectionLogModel.find({userId:userId}).skip(skipNumber).limit(p.pageSize)
+        return docs.map((user) => ({...user,id: user._id.toString()}))
     }
 }
 
@@ -49,17 +51,16 @@ export interface balanceRepo {
 } 
 
 export function newBalanceRepo(): balanceRepo {
-    return new balanceRepoImpl()
+    return new balanceRepoMongoImpl()
 }
 
-class balanceRepoImpl implements balanceRepo {
+class balanceRepoMongoImpl implements balanceRepo {
 
     constructor() {}
 
     async updateBalance(timeStamp: number, gold: number, session: ClientSession): Promise<boolean> {
         let monthlyTimeStamp = getCurrentMonthFirstDayTimestamp(timeStamp) 
-        let r = await IncomeMonthlyModel.updateOne(
-            { timeStamp: monthlyTimeStamp},{ $inc:{ balance: gold }}, {session:session , upsert:true})
+        let r = await IncomeMonthlyModel.updateOne({ timeStamp: monthlyTimeStamp},{ $inc:{ balance: gold }}, {session:session , upsert:true})
         return (r.modifiedCount > 0 || r.upsertedCount > 0)
     }
 }
