@@ -1,8 +1,8 @@
 import { FilterQuery, Types, ClientSession } from 'mongoose';
-import { pageX } from '../utils.js'
+import { pageX } from '../../utils.js'
 
-import { bookModel } from "../mongoModel/book.js"
-import { Book } from "../entity/book.js"
+import { bookModel } from "../../mongoModel/book.js"
+import { Book } from "../../entity/book.js"
 
 export interface BookRepo {
     count(bookName:string, tags:string[], priceLowerbound:number, priceUpperbound:number):Promise<number>

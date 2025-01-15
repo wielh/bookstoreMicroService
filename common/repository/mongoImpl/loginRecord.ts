@@ -1,8 +1,8 @@
 
-import { loginRecord } from "../entity/loginRecord"
-import { loginRecordModel } from "../mongoModel/loginRecord.js"
+import { loginRecord } from "../../entity/loginRecord"
+import { loginRecordModel } from "../../mongoModel/loginRecord.js"
 import { UserRepo } from "./user.js"
-import { GlobalConfig } from "../init.js"
+import { GlobalConfig } from "../../init.js"
 
 export interface loginRecordRepo {
     Insert(userID:string, loginTime:number, status:boolean): Promise<loginRecord>

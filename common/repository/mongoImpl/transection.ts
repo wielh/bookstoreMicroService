@@ -1,7 +1,7 @@
 import { ClientSession } from 'mongoose';
-import { getCurrentMonthFirstDayTimestamp, pageX} from '../utils.js'
-import { transectionLogModel, IncomeMonthlyModel } from '../mongoModel/transection.js'
-import { transectionLog } from '../entity/transection.js'
+import { getCurrentMonthFirstDayTimestamp, pageX} from '../../utils.js'
+import { transectionLogModel, IncomeMonthlyModel } from '../../mongoModel/transection.js'
+import { transectionLog } from '../../entity/transection.js'
 
 export interface transectionLogRepo {
     countLog(userId:string): Promise<number> 

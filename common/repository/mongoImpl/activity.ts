@@ -1,16 +1,9 @@
-import { activityModel } from "../mongoModel/activity.js"
-import { Activity } from "../entity/activity.js"
+import { activityModel } from "../../mongoModel/activity.js"
+import { Activity } from "../../entity/activity.js"
+import { ActivityRepo } from "../interface/activity.js"
 import { Types } from 'mongoose';
 
-export interface ActivityRepo {
-    findActivities(timeStamp:number): Promise<Activity[]>
-    findActivityType1ById(Id: string, timeStamp:number):Promise<Activity|null>
-    findActivityType2ById(Id: string, timeStamp:number):Promise<Activity|null>
-    findActivityType3ById(Id: string, timeStamp:number):Promise<Activity|null>
-    findActivityById(id:string, timeStamp:number):Promise<Activity|null>
-}
-
-export function newActivityRepo():ActivityRepo {
+export function newActivityRepo(): ActivityRepo {
     return new ActivityRepoMongoImpl()
 }
 

@@ -1,7 +1,7 @@
 import { ClientSession, Types } from 'mongoose';
-import { accountType } from '../init.js'
-import { comparePassword, passwordHash} from '../utils.js'
-import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../mongoModel/user.js'
+import { accountType } from '../../init.js'
+import { comparePassword, passwordHash} from '../../utils.js'
+import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../../mongoModel/user.js'
 
 export interface UserRepo {
     userExistByID(Id:string): Promise<boolean>
