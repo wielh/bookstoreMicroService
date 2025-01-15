@@ -2,13 +2,7 @@ import { ClientSession, Types } from 'mongoose';
 import { accountType } from '../../init.js'
 import { comparePassword, passwordHash} from '../../utils.js'
 import { userModel, normalUserModel, GoolgeUserModel, Suspensed } from '../../mongoModel/user.js'
-
-export interface UserRepo {
-    userExistByID(Id:string): Promise<boolean>
-    transection(userId:string, gold:number, session: ClientSession): Promise<boolean>
-    userSuspense(userId: string, reason: string, unlockTime: number): Promise<boolean>
-    userIsSuspensed(userId: string): Promise<number>
-}
+import { UserRepo, NormalUserRepo, GoogleUserRepo} from '../interface/user.js'
 
 export function newUserRepo(): UserRepo {
     return new UserRepoMongoImpl()
@@ -70,20 +64,11 @@ class UserRepoMongoImpl implements UserRepo {
     
 }
 
-export interface normalUserRepo {
-    normalUserExist(username:string): Promise<string>
-    normalUserExistWithPWD(username:string, password:string): Promise<string>
-    insertNormalUser(username:string, password:string, email:string, name:string): Promise<string>
-    resetPassword(username:string, password:string, newPassword:string): Promise<boolean>
-    normalEmailCheckAndChange(username:string, email:string): Promise<boolean> 
-    normalEmailVerify(userId: string): Promise<boolean>
-}
-
-export function newNormalUserRepo(): normalUserRepo {
+export function newNormalUserRepo(): NormalUserRepo {
     return new normalUserRepoMongoImpl()
 }
 
-class normalUserRepoMongoImpl implements normalUserRepo {
+class normalUserRepoMongoImpl implements NormalUserRepo {
 
     constructor() {
     }
@@ -146,16 +131,11 @@ class normalUserRepoMongoImpl implements normalUserRepo {
     
 }
 
-export function newGoogleUserRepo(): googleUserRepo {
+export function newGoogleUserRepo(): GoogleUserRepo {
     return new googleUserRepoMongoImpl()
 }
 
-export interface googleUserRepo {
-    googleUserExist(googleID:string): Promise<string>
-    insertGoogleUser(googleID:string, googleName:string, email:string): Promise<string>
-}
-
-class googleUserRepoMongoImpl implements googleUserRepo {
+class googleUserRepoMongoImpl implements GoogleUserRepo {
 
     constructor() {}
 

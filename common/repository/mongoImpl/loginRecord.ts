@@ -1,19 +1,15 @@
+import { GlobalConfig } from "../../init.js"
 
 import { loginRecord } from "../../entity/loginRecord"
 import { loginRecordModel } from "../../mongoModel/loginRecord.js"
-import { UserRepo } from "./user.js"
-import { GlobalConfig } from "../../init.js"
+import { UserRepo } from "../interface/user.js"
+import { LoginRecordRepo } from "../interface/loginRecord.js"
 
-export interface loginRecordRepo {
-    Insert(userID:string, loginTime:number, status:boolean): Promise<loginRecord>
-    CheckSucciveFailed(userID:string, loginTime:number): Promise<boolean>
+export function newLoginRecordRepo(userRepo: UserRepo): LoginRecordRepo {
+    return new LoginRecordRepoMongoImpl(userRepo)
 }
 
-export function newLoginRecordRepo(userRepo: UserRepo): loginRecordRepo {
-    return new loginRecordRepoMongoImpl(userRepo)
-}
-
-class loginRecordRepoMongoImpl implements loginRecordRepo {
+class LoginRecordRepoMongoImpl implements LoginRecordRepo {
 
     userRepo: UserRepo
     constructor(userRepo: UserRepo) {
